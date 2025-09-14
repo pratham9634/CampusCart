@@ -25,6 +25,19 @@
   font-style: normal;
 }
 
+@keyframes textGradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-text {
+  background-size: 200% 200%;
+  animation: textGradient 4s ease infinite;
+}
 
 
 @custom-variant dark (&:is(.dark *));
