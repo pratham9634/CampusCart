@@ -12,7 +12,7 @@ import Autoplay from "embla-carousel-autoplay";
 
 const Testimonials = () => {
   return (
-    <section className="w-full h-full px-4 py-16 bg-gradient-to-br from-green-50 via-teal-50 to-blue-50">
+    <section className="w-full h-full px-4 py-24 bg-gradient-to-br from-green-50 via-teal-50 to-blue-50">
       <h1 className="text-4xl sigmar font-[900] text-center w-full mb-16 relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 animate-text">
         What Our Users Say
         <span className="absolute bottom-[-16px] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 rounded-full animate-pulse"></span>

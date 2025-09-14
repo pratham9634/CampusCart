@@ -3,7 +3,7 @@ import { steps } from "@/constants/work_step";
 import { CheckCircle } from "lucide-react";
 const Works = () => {
   return (
-    <section className="w-full h-full  px-4 py-16 bg-gradient-to-br from-blue-50 via-purple-50 to-orange-50">
+    <section className="w-full h-full  px-4 py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-orange-50">
       
       {/* Heading */}
      <h1 className="text-4xl sigmar font-[900] text-center w-full mb-16 relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 animate-text">

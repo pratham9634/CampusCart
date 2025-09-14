@@ -3,7 +3,7 @@ import React from 'react';
 
 const WhyChoose = () => {
   return (
-    <section className="w-full px-6 py-16 bg-white text-center">
+    <section className="w-full px-6 py-24 bg-white text-center">
       <h1 className="text-4xl sigmar font-[900] text-center w-full mb-16 relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-purple-600 to-red-500 animate-text">
   Why Choose Us
   <span className="absolute bottom-[-16px] left-1/2 transform -translate-x-1/2 w-50 h-1 bg-gradient-to-r from-orange-500 via-purple-600 to-red-500 rounded-full animate-pulse"></span>
