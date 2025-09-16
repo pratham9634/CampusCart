@@ -27,10 +27,10 @@ const Navbar = () => {
           </Link>
 
           <SignedIn>
-            <Link href="/create-listing" className="px-3 py-2 rounded-md hover:text-blue-600 hover:bg-gray-100 transition-colors">
+            <Link href="/create" className="px-3 py-2 rounded-md hover:text-blue-600 hover:bg-gray-100 transition-colors">
               Create Listing
             </Link>
-            <Link href="/my-listings" className="px-3 py-2 rounded-md hover:text-blue-600 hover:bg-gray-100 transition-colors">
+            <Link href="/listings" className="px-3 py-2 rounded-md hover:text-blue-600 hover:bg-gray-100 transition-colors">
               My Listings
             </Link>
             <Link href="/profile" className="px-3 py-2 rounded-md hover:text-blue-600 hover:bg-gray-100 transition-colors">
