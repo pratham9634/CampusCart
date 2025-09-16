@@ -38,7 +38,35 @@ export default function RootLayout({ children }) {
         <Navbar/>
         {children}
         <Footer/>
-        <Toaster />
+        <Toaster
+  position="bottom-left"
+  reverseOrder={true}
+  gutter={12}
+  containerClassName="my-toast-container"
+  containerStyle={{ zIndex: 9999 }}
+  toastOptions={{
+    duration: 4000,
+    style: {
+      background: "#1e293b",
+      color: "#facc15",
+      fontSize: "16px",
+      padding: "12px 20px",
+      borderRadius: "10px",
+    },
+    success: {
+      duration: 3000,
+      icon: '✅',
+    },
+    error: {
+      duration: 5000,
+      icon: '❌',
+    },
+    loading: {
+      icon: '⏳',
+    },
+  }}
+/>
+
       </body>
     </html>
     </ClerkProvider>

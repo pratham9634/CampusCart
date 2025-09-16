@@ -1,8 +1,12 @@
 "use client";
 import { categoriesData } from "@/constants/categories";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import toast, { Toaster } from "react-hot-toast";
 
-const page = () => {
+const Page = () => {
+  const { user } = useUser();
+
   const [formData, setFormData] = useState({
     title: "",
     category: categoriesData[0].title,
@@ -15,15 +19,26 @@ const page = () => {
     phone: "",
   });
 
-  const handleInputChange = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Autofill email from Clerk
+  useEffect(() => {
+    if (user && user.primaryEmailAddress) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.primaryEmailAddress.emailAddress,
+      }));
+    }
+  }, [user]);
+
+  const handleInputChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     const existing = formData.images || [];
     if (existing.length + files.length > 6) {
-      alert("You can upload a maximum of 6 images.");
+      toast.error("You can upload a maximum of 6 images.");
       return;
     }
     setFormData({
@@ -34,27 +49,64 @@ const page = () => {
 
   const handleVideoChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData({
-        ...formData,
-        video: file,
+    if (file) setFormData({ ...formData, video: file });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const toastId = toast.loading("Listing your product...");
+
+    try {
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "images") {
+          value.forEach((img) => data.append("images", img));
+        } else if (key === "video" && value) {
+          data.append("video", value);
+        } else {
+          data.append(key, value);
+        }
       });
+      console.log(data);
+      console.log(formData);
+      const response = await fetch("/api/create", { method: "POST", body: data });
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || "Failed to list item");
+
+      toast.success("Product listed successfully!", { id: toastId });
+
+      // Reset form
+      setFormData({
+        title: "",
+        category: categoriesData[0].title,
+        type: "sale",
+        price: "",
+        description: "",
+        images: [],
+        video: null,
+        email: user?.primaryEmailAddress?.emailAddress || "",
+        phone: "",
+      });
+    } catch (error) {
+      console.error(error.message);
+      toast.error(`Error: ${error.message}`, { id: toastId });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Item Listed", formData);
-    // API call can be added here
-    
-  };
 
   return (
-    <main className="min-h-screen w-full pt-20  p-6 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-pink-100">
+    <main className="min-h-screen w-full pt-20 p-6 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-pink-100">
+      <Toaster position="top-right" reverseOrder={false} />
 
       {/* Greeting Section */}
-      <div className="w-full  bg-white rounded-2xl shadow-xl p-8 mt-10 text-center border-t-4 border-purple-600">
-        <h1 className="text-4xl font-extrabold text-purple-700 mb-4">Welcome to CampusMart!</h1>
+      <div className="w-full bg-white rounded-2xl shadow-xl p-8 mt-10 text-center border-t-4 border-purple-600">
+        <h1 className="text-4xl font-extrabold text-purple-700 mb-4">
+          Welcome to CampusMart!
+        </h1>
         <p className="text-gray-700 mb-3">
           Discover how easy it is to list and sell your items.
         </p>
@@ -64,11 +116,14 @@ const page = () => {
       </div>
 
       {/* Listing Form Section */}
-      <div className=" w-[70vw] bg-white rounded-2xl shadow-xl p-8 mt-8 border-t-4 border-orange-500">
+      <div className="w-[70vw] bg-white rounded-2xl shadow-xl p-8 mt-8 border-t-4 border-orange-500">
         <h2 className="text-2xl font-bold text-blue-600 mb-6 text-center">List Your Item</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
-
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6"
+          encType="multipart/form-data"
+        >
           {/* Item Title */}
           <div>
             <label className="block mb-2 font-semibold text-gray-700">Item Title</label>
@@ -115,7 +170,9 @@ const page = () => {
               <option value="sale">Sale</option>
               <option value="auction">Auction</option>
             </select>
-            <small className="text-gray-500 text-sm">Choose Auction to allow users to bid.</small>
+            <small className="text-gray-500 text-sm">
+              Choose Auction to allow users to bid.
+            </small>
           </div>
 
           {/* Price */}
@@ -226,9 +283,14 @@ const page = () => {
           <div className="text-center">
             <button
               type="submit"
-              className="w-[20vw] bg-gradient-to-r from-purple-600 to-orange-500 text-white py-3 rounded-lg hover:from-purple-700 hover:to-orange-600 transition-all font-semibold"
+              disabled={isSubmitting}
+              className={`w-[20vw] py-3 rounded-lg font-semibold transition-all ${
+                isSubmitting
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white"
+              }`}
             >
-              List Item
+              {isSubmitting ? "Listing..." : "List Item"}
             </button>
           </div>
         </form>
@@ -237,4 +299,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
