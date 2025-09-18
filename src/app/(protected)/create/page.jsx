@@ -1,11 +1,14 @@
 "use client";
 import { categoriesData } from "@/constants/categories";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import toast, { Toaster } from "react-hot-toast";
 
 const Page = () => {
   const { user } = useUser();
+
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -24,7 +27,7 @@ const Page = () => {
   // Autofill email from Clerk
   useEffect(() => {
     if (user && user.primaryEmailAddress) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         email: user.primaryEmailAddress.emailAddress,
       }));
@@ -52,6 +55,20 @@ const Page = () => {
     if (file) setFormData({ ...formData, video: file });
   };
 
+  // Remove individual image
+  const handleRemoveImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Remove video
+  const handleRemoveVideo = () => {
+    setFormData((prev) => ({ ...prev, video: null }));
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -68,11 +85,14 @@ const Page = () => {
           data.append(key, value);
         }
       });
-      console.log(data);
-      console.log(formData);
-      const response = await fetch("/api/create", { method: "POST", body: data });
-      const result = await response.json();
 
+      console.log([...data.entries()]);
+      console.log(formData);
+
+      const response = await fetch("/api/create", { method: "POST", body: data });
+      console.log("📡 Raw response:", response);
+
+      const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to list item");
 
       toast.success("Product listed successfully!", { id: toastId });
@@ -89,6 +109,10 @@ const Page = () => {
         email: user?.primaryEmailAddress?.emailAddress || "",
         phone: "",
       });
+
+      // Reset file inputs
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      if (videoInputRef.current) videoInputRef.current.value = "";
     } catch (error) {
       console.error(error.message);
       toast.error(`Error: ${error.message}`, { id: toastId });
@@ -96,7 +120,6 @@ const Page = () => {
       setIsSubmitting(false);
     }
   };
-
 
   return (
     <main className="min-h-screen w-full pt-20 p-6 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-pink-100">
@@ -119,11 +142,7 @@ const Page = () => {
       <div className="w-[70vw] bg-white rounded-2xl shadow-xl p-8 mt-8 border-t-4 border-orange-500">
         <h2 className="text-2xl font-bold text-blue-600 mb-6 text-center">List Your Item</h2>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-          encType="multipart/form-data"
-        >
+        <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
           {/* Item Title */}
           <div>
             <label className="block mb-2 font-semibold text-gray-700">Item Title</label>
@@ -211,17 +230,25 @@ const Page = () => {
               type="file"
               accept="image/*"
               multiple
+              ref={imageInputRef}
               onChange={handleImageChange}
               className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all"
             />
             <div className="flex gap-3 mt-3 flex-wrap">
               {formData.images.map((img, index) => (
-                <div key={index} className="w-20 h-20 border rounded-md overflow-hidden">
+                <div key={index} className="relative w-20 h-20 border rounded-md overflow-hidden">
                   <img
                     src={URL.createObjectURL(img)}
                     alt={`image-${index}`}
                     className="w-full h-full object-cover"
                   />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))}
             </div>
@@ -233,15 +260,23 @@ const Page = () => {
             <input
               type="file"
               accept="video/*"
+              ref={videoInputRef}
               onChange={handleVideoChange}
               className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 transition-all"
             />
             {formData.video && (
-              <div className="mt-3">
+              <div className="mt-3 relative w-[250px]">
                 <video controls width="250" className="rounded-md border">
                   <source src={URL.createObjectURL(formData.video)} type={formData.video.type} />
                   Your browser does not support the video tag.
                 </video>
+                <button
+                  type="button"
+                  onClick={handleRemoveVideo}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                >
+                  ✕
+                </button>
               </div>
             )}
           </div>
@@ -252,7 +287,9 @@ const Page = () => {
 
             {/* Email */}
             <div>
-              <label className="block mb-2 font-semibold text-gray-700">Email <span className="text-red-500">*</span></label>
+              <label className="block mb-2 font-semibold text-gray-700">
+                Email <span className="text-red-500">*</span>
+              </label>
               <input
                 type="email"
                 name="email"
