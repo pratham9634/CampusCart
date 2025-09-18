@@ -5,6 +5,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
 import { Toaster } from "react-hot-toast";
+import { Provider } from "react-redux";
+import { store } from "@/lib/store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +38,9 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar/>
+        <Provider store={store}>
         {children}
+        </Provider>
         <Footer/>
         <Toaster
   position="bottom-left"

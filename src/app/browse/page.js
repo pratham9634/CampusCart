@@ -2,7 +2,9 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div>page</div>
+    <section className="p-4">
+      <h1>Browse Page</h1>
+    </section>
   )
 }
 
