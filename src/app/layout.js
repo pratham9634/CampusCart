@@ -1,3 +1,4 @@
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -5,8 +6,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
 import { Toaster } from "react-hot-toast";
-import { Provider } from "react-redux";
-import { store } from "@/lib/store";
+
+import { Providers } from "@/redux/provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,9 +39,9 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar/>
-        <Provider store={store}>
+        <Providers >
         {children}
-        </Provider>
+        </Providers>
         <Footer/>
         <Toaster
   position="bottom-left"
