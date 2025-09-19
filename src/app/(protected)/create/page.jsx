@@ -20,6 +20,9 @@ const Page = () => {
     video: null,
     email: "",
     phone: "",
+    // new fields
+    college: "",
+    condition: "used",  // default value
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,8 +37,10 @@ const Page = () => {
     }
   }, [user]);
 
-  const handleInputChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -55,7 +60,6 @@ const Page = () => {
     if (file) setFormData({ ...formData, video: file });
   };
 
-  // Remove individual image
   const handleRemoveImage = (index) => {
     setFormData((prev) => ({
       ...prev,
@@ -63,7 +67,6 @@ const Page = () => {
     }));
   };
 
-  // Remove video
   const handleRemoveVideo = () => {
     setFormData((prev) => ({ ...prev, video: null }));
     if (videoInputRef.current) videoInputRef.current.value = "";
@@ -86,12 +89,10 @@ const Page = () => {
         }
       });
 
-      console.log([...data.entries()]);
-      console.log(formData);
+      // console.log([...data.entries()]);
+      // console.log(formData);
 
       const response = await fetch("/api/create", { method: "POST", body: data });
-      console.log("📡 Raw response:", response);
-
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to list item");
 
@@ -108,9 +109,10 @@ const Page = () => {
         video: null,
         email: user?.primaryEmailAddress?.emailAddress || "",
         phone: "",
+        college: "",
+        condition: "new",
       });
 
-      // Reset file inputs
       if (imageInputRef.current) imageInputRef.current.value = "";
       if (videoInputRef.current) videoInputRef.current.value = "";
     } catch (error) {
@@ -167,7 +169,7 @@ const Page = () => {
               required
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
             >
-              <option value="">Select a category</option>
+              <option value="stationery">Select a Category</option>
               {categoriesData.map((cat) => (
                 <option key={cat.id} value={cat.title}>
                   {cat.title}
@@ -204,6 +206,36 @@ const Page = () => {
               onChange={handleInputChange}
               placeholder="Ex: 50000"
               min="0"
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none hover:border-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Condition */}
+          <div>
+            <label className="block mb-2 font-semibold text-gray-700">Condition</label>
+            <select
+              name="condition"
+              value={formData.condition}
+              onChange={handleInputChange}
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none hover:border-green-500 transition-all"
+            >
+              <option value="new">New</option>
+              <option value="used">Used</option>
+              <option value="refurbished">Refurbished</option>
+            </select>
+          </div>
+
+          {/* College / Location */}
+          <div>
+            <label className="block mb-2 font-semibold text-gray-700">College / Location</label>
+            <input
+              type="text"
+              name="college"
+              value={formData.college}
+              onChange={handleInputChange}
+              placeholder="Enter your college or location"
               required
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none hover:border-blue-500 transition-all"
             />
@@ -249,8 +281,14 @@ const Page = () => {
                   >
                     ✕
                   </button>
+                  
                 </div>
               ))}
+             {/* Disclaimer */}
+  <p className="text-sm text-gray-800 italic">
+    Note: The <span className="font-semibold text-orange-600">first uploaded image</span> will be used as your product’s cover image.
+  </p>
+
             </div>
           </div>
 
