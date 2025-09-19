@@ -232,7 +232,7 @@ const BrowseWithSidebar = () => {
                       <p className="text-lg font-bold text-gray-800">
                         ₹{product.price}
                       </p>
-                      {product.listingType === "new" ? (
+                      {product.listingType === "auction" ? (
                         <Button
                           size="sm"
                           className="bg-purple-500 text-white hover:bg-purple-600"
