@@ -3,6 +3,7 @@ import { categoriesData } from "@/constants/categories";
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import toast, { Toaster } from "react-hot-toast";
+import Loader from "@/components/helper/Loader";
 
 const Page = () => {
   const { user } = useUser();
@@ -89,8 +90,8 @@ const Page = () => {
         }
       });
 
-      // console.log([...data.entries()]);
-      // console.log(formData);
+      console.log([...data.entries()]);
+      console.log(formData);
 
       const response = await fetch("/api/create", { method: "POST", body: data });
       const result = await response.json();
@@ -361,11 +362,11 @@ const Page = () => {
               disabled={isSubmitting}
               className={`w-[20vw] py-3 rounded-lg font-semibold transition-all ${
                 isSubmitting
-                  ? "bg-gray-400 cursor-not-allowed"
+                  ? "bg-gradient-to-r from-red-600 to-orange-200 hover:from-purple-500 hover:to-orange-500 text-white cursor-not-allowed"
                   : "bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white"
               }`}
             >
-              {isSubmitting ? "Listing..." : "List Item"}
+              {isSubmitting ?<Loader/> : "List Item"}
             </button>
           </div>
         </form>

@@ -19,11 +19,18 @@ export async function POST(req) {
     const title = formData.get("title");
     const category = formData.get("category");
     const type = formData.get("type");
-    const price = formData.get("price");
+    const price = Number(formData.get("price"));
     const description = formData.get("description");
     const email = formData.get("email");
     const phone = formData.get("phone");
-
+    const college = formData.get("college");
+    const condition = formData.get("condition");
+    if (!title || !category || !type || !price || !email) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
     // Handle images
     const images = [];
     const imageFiles = formData.getAll("images"); // ✅ multiple files
@@ -72,13 +79,15 @@ export async function POST(req) {
       video,
       email,
       phone,
+      college,
+      condition,
       createdBy: userId,
     });
 
     await product.save();
 
     return NextResponse.json(
-      { message: "Product created successfully", product },
+      { message: "Product created successfully"},
       { status: 201 }
     );
   } catch (err) {
