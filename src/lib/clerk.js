@@ -1,7 +1,7 @@
 "use server"
 import { Clerk } from "@clerk/clerk-sdk-node";
 
-const clerk = new Clerk({ apiKey: process.env.CLERK_SECRET_KEY });
+const clerk = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 
 export const getUserById = async (userId) => {
   try {

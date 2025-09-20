@@ -34,6 +34,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import PageLoader from "@/components/helper/PageLoader";
 
 const BrowseWithSidebar = () => {
   const dispatch = useDispatch();
@@ -198,7 +199,9 @@ const BrowseWithSidebar = () => {
 
         {/* Products grid */}
         {status === "loading" ? (
-          <p className="text-center text-gray-500">Loading products...</p>
+          <div className="flex justify-center items-center h-64">
+            <PageLoader/>
+          </div>
         ) : status === "failed" ? (
           <p className="text-center text-red-500">Error: {error}</p>
         ) : products.length === 0 ? (
@@ -210,46 +213,63 @@ const BrowseWithSidebar = () => {
                 key={product._id || product.id}
                 href={`/product/${product._id || product.id}`}
               >
-                <Card className="hover:shadow-xl transition transform hover:-translate-y-1 border border-gray-200">
-                  <CardContent className="p-0">
-                    <div className="relative w-full h-36">
-                      <Image
-                        src={product.images?.[0] || "/default_items.webp"}
-                        alt={product.title}
-                        fill
-                        className="object-cover rounded-t-lg"
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex flex-col space-y-1 p-3">
-                    <h3 className="font-semibold text-md text-purple-600 truncate">
-                      {product.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 truncate">
-                      {product.category}
-                    </p>
-                    <div className="flex justify-between items-center mt-2">
-                      <p className="text-lg font-bold text-gray-800">
-                        ₹{product.price}
-                      </p>
-                      {product.listingType === "auction" ? (
-                        <Button
-                          size="sm"
-                          className="bg-purple-500 text-white hover:bg-purple-600"
-                        >
-                          Buy
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          className="bg-orange-500 text-white hover:bg-orange-600"
-                        >
-                          Bid
-                        </Button>
-                      )}
-                    </div>
-                  </CardFooter>
-                </Card>
+               <Card className="w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group">
+  {/* Product Image */}
+  <div className="relative w-full h-20 ">
+    <Image
+      src={product.images?.[0] || "/default_items.webp"}
+      alt={product.title}
+      fill
+      className="object-contain  w-full h-full transition-transform duration-500 group-hover:scale-105"
+    />
+  </div>
+
+  {/* Product Info */}
+  <CardFooter className="flex flex-col p-1 gap-2">
+    {/* Title */}
+    <h3 className="font-semibold text-lg md:text-xl text-purple-700 line-clamp-2">
+      {product.title}
+    </h3>
+
+  {/* Description */}
+<div className="relative max-w-full">
+  <p className="text-gray-600 text-sm md:text-base line-clamp-1">
+    {product.description || "No description available."}
+  </p>
+  {/* Optional fade effect for extra polish */}
+  <div className="absolute bottom-0 right-0 h-6 w-12  pointer-events-none"></div>
+</div>
+
+
+    {/* Price */}
+    <p className="text-orange-500 font-bold text-lg md:text-xl">
+      ₹{product.price?.toLocaleString() || "N/A"}
+    </p>
+
+    {/* Category Bubble */}
+   <div className="flex items-center justify-between gap-1">
+     {product.category && (
+      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full cursor-default">
+        {product.category}
+      </span>
+    )}
+
+    {/* Time Posted */}
+    <p className="text-gray-400 text-xs">
+      Posted {product.createdAt ? `${Math.floor((new Date() - new Date(product.createdAt)) / (1000 * 60 * 60 * 24))} day(s) ago` : "N/A"}
+    </p>
+   </div>
+
+    {/* View Product Button */}
+    <Button
+      className="mt-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-2 px-4 transition-colors w-full"
+    >
+      View Product
+    </Button>
+  </CardFooter>
+</Card>
+
+
               </Link>
             ))}
           </div>

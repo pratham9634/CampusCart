@@ -1,5 +1,6 @@
 "use client";
 
+import PageLoader from "@/components/helper/PageLoader";
 import ProductDetails from "@/components/helper/ProductDetails";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -34,9 +35,9 @@ const Page = () => {
 
   if (loading)
     return (
-      <div className="w-screen h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
-      </div>
+  <div className="w-screen h-screen flex items-center justify-center">
+    <PageLoader />
+  </div>
     );
 
   if (error)
