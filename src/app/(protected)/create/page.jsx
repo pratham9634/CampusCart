@@ -370,7 +370,13 @@ const Page = () => {
             </button>
           </div>
         </form>
+        {/* Disclaimer */}
+<p className="text-lg text-black/80 font-semibold italic text-center">
+  Note: Please <span className="font-extrabold text-orange-600">delete this product</span> from your profile once it is sold.
+</p>
       </div>
+     
+
     </main>
   );
 };
