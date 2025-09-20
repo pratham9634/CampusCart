@@ -1,8 +1,25 @@
+"use client"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 const Hero = () => {
+    const [query, setQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearch = () => {
+    if (query.trim()) {
+      router.push(`/browse?query=${encodeURIComponent(query)}`);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
   return (
      <section className="w-full h-[90vh] mt-15 flex items-center justify-center px-6 bg-gradient-to-br from-blue-100 via-violet-100 to-blue-100">
            {/* Gradient Balls */}
@@ -31,23 +48,31 @@ const Hero = () => {
 
       {/* Search bar with icon and search button inside it */}
       <div className="relative w-full max-w-lg mx-auto sm:mx-0">
-        <Input
-          type="text"
-          placeholder="Search items, categories..."
-          className="pl-12 pr-28 py-3 rounded-full border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-        />
-        <Search className="absolute left-4 top-3.5 text-gray-400" />
-        <Button className="absolute right-1 top-1 bottom-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 text-white rounded-full px-5 hover:opacity-90 transition-opacity">
-          Search
-        </Button>
-      </div>
+      <Input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Search items, categories..."
+        className="pl-12 pr-28 py-5 rounded-full border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      />
+      <Search className="absolute left-4 top-2 text-gray-400" />
+      <Button
+        onClick={handleSearch}
+        className="absolute right-1 top-0.5 bottom-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 text-white rounded-full px-5 hover:opacity-90 transition-opacity"
+      >
+        Search
+      </Button>
+    </div>
 
       {/* Outer action buttons */}
       <div className="flex  gap-4 justify-center md:justify-start mt-6">
-        <Button className="text-xl font-bold bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white px-6 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform">
+        <Button onClick={() => router.push("/browse")}
+        className="text-xl font-bold bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white px-6 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform">
           Browse
         </Button>
-        <Button className="text-xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white px-6 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform">
+        <Button onClick={() => router.push("/create")}
+        className="text-xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white px-6 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform">
           Start Selling
         </Button>
       </div>
