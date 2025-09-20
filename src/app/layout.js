@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/logo_CampusCart.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
       >
         <Navbar/>
         <Providers >

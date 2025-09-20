@@ -25,8 +25,8 @@ export  async function GET(req){
     
     let sortOption = { createdAt: -1 }; // default to latest
     if (sort === "oldest") sortOption = { createdAt: 1 };
-    else if (sort === "priceLowToHigh") sortOption = { price: 1 };
-    else if (sort === "priceHighToLow") sortOption = { price: -1 };
+    else if (sort === "low-to-high") sortOption = { price: 1 };
+    else if (sort === "high-to-low") sortOption = { price: -1 };
 
     const skip = (page - 1) * limit;
 

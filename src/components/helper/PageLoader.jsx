@@ -19,7 +19,7 @@ const PageLoader = () => {
 const StyledWrapper = styled.div`
   .🤚 {
     --skin-color: #E4C560;
-    --tap-speed: 0.6s;
+    --tap-speed: 0.4s;
     --tap-stagger: 0.1s;
     position: relative;
     width: 80px;

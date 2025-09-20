@@ -4,16 +4,16 @@ import { Search } from "lucide-react";
 import Image from "next/image";
 const Hero = () => {
   return (
-     <section className="w-full h-[90vh] mt-16 flex items-center justify-center px-6 bg-gradient-to-br from-blue-100 via-violet-100 to-blue-100">
+     <section className="w-full h-[90vh] mt-15 flex items-center justify-center px-6 bg-gradient-to-br from-blue-100 via-violet-100 to-blue-100">
            {/* Gradient Balls */}
         <div className="absolute top-20 left-10 w-48 h-48 bg-gradient-to-tr from-purple-300 via-pink-300 to-blue-300 rounded-full opacity-80 blur-3xl animate-pulse"></div>
         <div className="absolute bottom-10 right-20 w-64 h-64 bg-gradient-to-br from-yellow-200 via-orange-200 to-red-200 rounded-full opacity-70 blur-2xl animate-pulse"></div>
         <div className="absolute top-1/2 left-1/2 w-36 h-36 bg-gradient-to-r from-green-200 via-teal-200 to-blue-200 rounded-full opacity-80 blur-2xl animate-pulse"></div>
         <div className="flex flex-col md:flex-row items-center max-w-6xl w-full gap-8">
           {/* Left side - Text content */}
-          <div className="md:w-2/3 text-center md:text-left space-y-10 px-4">
+          <div className="md:w-2/3 text-center md:text-left space-y-4 px-4">
       {/* Heading with gradient text */}
-    <h1 className="text-4xl  md:text-5xl   text-center md:text-left leading-snug">
+    <h1 className="text-xl  md:text-4xl   text-center md:text-left leading-snug">
   <span className="block   bg-gradient-to-r font-semibold tracking-tight from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
     Welcome to the world of
   </span>
@@ -54,13 +54,13 @@ const Hero = () => {
     </div>
 
           {/* Right side - Image */}
-          <div className="md:w-1/2 border-none">
+          <div className="w-1/2 border-none">
             <Image
               src="/cart.webp"
               width={750}
               height={500}
               alt="Students using marketplace"
-              className="mx-4 md:mx-6 lg:mx-32"
+              className="mx-2 md:mx-6"
             />
           </div>
         </div>

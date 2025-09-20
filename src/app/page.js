@@ -9,7 +9,7 @@ import Featured from "@/components/home/Featured";
 
 export default function Home() {
   return (
-    <main className="flex flex-col h-full w-full p-1">
+    <main className="flex flex-col h-full w-full items-center justify-center gap-1">
 
       {/* Hero Section */}
         <Hero/>

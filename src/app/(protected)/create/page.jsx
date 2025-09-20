@@ -125,15 +125,15 @@ const Page = () => {
   };
 
   return (
-    <main className="min-h-screen w-full pt-20 p-6 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-pink-100">
+    <main className="min-h-screen w-full pt-12 p-2 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-pink-100">
       <Toaster position="top-right" reverseOrder={false} />
 
       {/* Greeting Section */}
-      <div className="w-full bg-white rounded-2xl shadow-xl p-8 mt-10 text-center border-t-4 border-purple-600">
-        <h1 className="text-4xl font-extrabold text-purple-700 mb-4">
+      <div className="w-full bg-white rounded-2xl shadow-xl p-2 mt-8 text-center border-t-4 border-purple-600">
+        <h1 className="text-lg md:text-xl font-extrabold text-purple-700 ">
           Welcome to CampusMart!
         </h1>
-        <p className="text-gray-700 mb-3">
+        <p className="text-gray-700 mt-2">
           Discover how easy it is to list and sell your items.
         </p>
         <p className="text-gray-600">
@@ -142,13 +142,13 @@ const Page = () => {
       </div>
 
       {/* Listing Form Section */}
-      <div className="w-[70vw] bg-white rounded-2xl shadow-xl p-8 mt-8 border-t-4 border-orange-500">
-        <h2 className="text-2xl font-bold text-blue-600 mb-6 text-center">List Your Item</h2>
+      <div className="w-[80vw] bg-white rounded-2xl shadow-xl px-8 pt-2 mt-4 border-t-4 border-orange-500">
+        <h2 className="text-md font-bold text-blue-600 mb-2 text-center">List Your Item</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
           {/* Item Title */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Item Title</label>
+            <label className="block  font-semibold text-gray-700">Item Title</label>
             <input
               type="text"
               name="title"
@@ -156,19 +156,19 @@ const Page = () => {
               onChange={handleInputChange}
               placeholder="Ex: MacBook Pro 2019"
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none hover:border-blue-400 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none hover:border-blue-400 transition-all"
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Category</label>
+            <label className="block font-semibold text-gray-700">Category</label>
             <select
               name="category"
               value={formData.category}
               onChange={handleInputChange}
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
             >
               <option value="stationery">Select a Category</option>
               {categoriesData.map((cat) => (
@@ -181,13 +181,13 @@ const Page = () => {
 
           {/* Type of Listing */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Type of Listing</label>
+            <label className="block font-semibold text-gray-700">Type of Listing</label>
             <select
               name="type"
               value={formData.type}
               onChange={handleInputChange}
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none hover:border-purple-500 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none hover:border-purple-500 transition-all"
             >
               <option value="sale">Sale</option>
               <option value="auction">Auction</option>
@@ -199,7 +199,7 @@ const Page = () => {
 
           {/* Price */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Price</label>
+            <label className="block  font-semibold text-gray-700">Price</label>
             <input
               type="number"
               name="price"
@@ -208,19 +208,19 @@ const Page = () => {
               placeholder="Ex: 50000"
               min="0"
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none hover:border-blue-500 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none hover:border-blue-500 transition-all"
             />
           </div>
 
           {/* Condition */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Condition</label>
+            <label className="block font-semibold text-gray-700">Condition</label>
             <select
               name="condition"
               value={formData.condition}
               onChange={handleInputChange}
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none hover:border-green-500 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none hover:border-green-500 transition-all"
             >
               <option value="new">New</option>
               <option value="used">Used</option>
@@ -230,7 +230,7 @@ const Page = () => {
 
           {/* College / Location */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">College / Location</label>
+            <label className="block font-semibold text-gray-700">College / Location</label>
             <input
               type="text"
               name="college"
@@ -238,13 +238,13 @@ const Page = () => {
               onChange={handleInputChange}
               placeholder="Enter your college or location"
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none hover:border-blue-500 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none hover:border-blue-500 transition-all"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Description</label>
+            <label className="block font-semibold text-gray-700">Description</label>
             <textarea
               name="description"
               value={formData.description}
@@ -252,13 +252,13 @@ const Page = () => {
               placeholder="Ex: MacBook Pro, 16 inch, excellent condition, used for 2 years."
               rows="5"
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
             ></textarea>
           </div>
 
           {/* Upload Images */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Upload Images (Max 6)</label>
+            <label className="block font-semibold text-gray-700">Upload Images (Max 6)</label>
             <input
               type="file"
               accept="image/*"
@@ -295,7 +295,7 @@ const Page = () => {
 
           {/* Upload Video */}
           <div>
-            <label className="block mb-2 font-semibold text-gray-700">Upload Video (Optional)</label>
+            <label className="block  font-semibold text-gray-700">Upload Video (Optional)</label>
             <input
               type="file"
               accept="video/*"
@@ -321,12 +321,12 @@ const Page = () => {
           </div>
 
           {/* Contact Information */}
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-lg font-semibold mb-4 text-blue-600">Contact Information</h3>
+          <div className="pt-2 border-t border-gray-200">
+            <h3 className="text-lg font-semibold mb-1 text-blue-600">Contact Information</h3>
 
             {/* Email */}
             <div>
-              <label className="block mb-2 font-semibold text-gray-700">
+              <label className="block font-semibold text-gray-700">
                 Email <span className="text-red-500">*</span>
               </label>
               <input
@@ -336,21 +336,21 @@ const Page = () => {
                 onChange={handleInputChange}
                 placeholder="example@college.edu"
                 required
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none hover:border-blue-400 transition-all"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none hover:border-blue-400 transition-all"
               />
               <small className="text-gray-500 text-sm">We’ll contact you via this email.</small>
             </div>
 
             {/* Phone */}
             <div>
-              <label className="block mb-2 font-semibold text-gray-700">Phone Number (Optional)</label>
+              <label className="block  font-semibold text-gray-700">Phone Number (Optional)</label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="Ex: +91 9********0"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
+                className="w-full p-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
               />
             </div>
           </div>
@@ -360,7 +360,7 @@ const Page = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-[20vw] py-3 rounded-lg font-semibold transition-all ${
+              className={`w-[20vw] py-2 rounded-lg font-semibold transition-all ${
                 isSubmitting
                   ? "bg-gradient-to-r from-red-600 to-orange-200 hover:from-purple-500 hover:to-orange-500 text-white cursor-not-allowed"
                   : "bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white"
@@ -371,7 +371,7 @@ const Page = () => {
           </div>
         </form>
         {/* Disclaimer */}
-<p className="text-lg text-black/80 font-semibold italic text-center">
+<p className="text-sm text-black/80 font-semibold italic text-center">
   Note: Please <span className="font-extrabold text-orange-600">delete this product</span> from your profile once it is sold.
 </p>
       </div>

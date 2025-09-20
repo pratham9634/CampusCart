@@ -77,7 +77,7 @@ const Featured = ({ products= dummyProducts}) => {
   return (
     <section className="w-full py-12 px-8 bg-gray-200">
       {/* Heading */}
-      <h2 className="text-3xl md:text-4xl font-extrabold text-center">
+      <h2 className="text-xl md:text-2xl font-extrabold text-center">
         <span className="bg-gradient-to-r from-orange-500 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-text">
           Featured Products
         </span>
@@ -95,7 +95,7 @@ const Featured = ({ products= dummyProducts}) => {
              transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
           >
             {/* Product Image */}
-            <div className="relative w-full h-40">
+            <div className="relative w-full h-30">
               <Image
                 src={product.image || "/default_items.webp"}
                 alt={product.title}
@@ -106,13 +106,13 @@ const Featured = ({ products= dummyProducts}) => {
 
             {/* Info */}
             <div className="p-4 flex flex-col flex-grow">
-              <h3 className="font-bold text-lg text-gray-900 truncate">
+              <h3 className="font-bold text-md text-gray-900 truncate">
                 {product.title}
               </h3>
-              <p className="text-sm text-gray-700 mt-1 line-clamp-2">
+              <p className="text-sm text-gray-700  line-clamp-2">
                 {product.description}
               </p>
-              <p className="mt-2 text-orange-500 font-semibold">
+              <p className=" text-orange-500 font-semibold">
                 ₹{product.price}
               </p>
               <p className="mt-1 text-xs text-blue-600 font-medium">
