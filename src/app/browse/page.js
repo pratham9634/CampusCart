@@ -208,24 +208,30 @@ const BrowseWithSidebar = () => {
           <p className="text-center text-gray-500">No products found.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {products.filter((product) => product.isActive).map((product) => (
               <Link
                 key={product._id || product.id}
                 href={`/product/${product._id || product.id}`}
               >
-               <Card className="w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group">
+               <Card className="w-full p-0 pb-2 bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group">
   {/* Product Image */}
-  <div className="relative w-full h-20 ">
+  <div className="relative w-full h-26 ">
+    {product?.type === "auction" && (
+  <div className="absolute z-1 top-3 right-2 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-yellow-700 text-white text-sm font-bold shadow-lg animate-bounce">
+    🔥 Auction
+  </div>
+)}
+
     <Image
       src={product.images?.[0] || "/default_items.webp"}
       alt={product.title}
       fill
-      className="object-contain  w-full h-full transition-transform duration-500 group-hover:scale-105"
+      className="object-cover   w-full h-full transition-transform duration-500 group-hover:scale-105"
     />
   </div>
 
   {/* Product Info */}
-  <CardFooter className="flex flex-col p-1 gap-2">
+  <CardFooter className="flex flex-col p-1 gap-1">
     {/* Title */}
     <h3 className="font-semibold text-lg md:text-xl text-purple-700 line-clamp-2">
       {product.title}
