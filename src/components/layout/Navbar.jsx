@@ -8,15 +8,17 @@ const Navbar = () => {
     <nav className="fixed h-[10vh] top-0 left-0 w-full bg-transparent  backdrop-blur-md shadow-md border-b border-gray-200 px-6 py-3 flex items-center justify-between z-50">
       {/* Left side - Logo and Links */}
       <div className="flex justify-around w-[80vw] items-center space-x-12">
-        <Link href="/" className="flex items-center">
-          <Image
-                        src="/logo.png"
-                        width={50}
-                        height={70}
-                        alt="Students using marketplace"
-                        className=""
-                      />
-        </Link>
+        <Link href="/" className="flex items-center gap-2 group">
+  <Image
+    src="/logo.png"
+    width={50}
+    height={50}
+    alt="CampusCart Logo"
+    className="rounded-[50%] shadow-md transition-transform duration-300 group-hover:scale-110"
+    priority
+  />
+</Link>
+
         
         <div className="hidden justify-evenly md:flex space-x-4 items-center text-md font-bold nunito text-gray-600">
           <Link href="/" className="px-3 py-2 rounded-md hover:text-blue-600 hover:bg-gray-100 transition-colors">
