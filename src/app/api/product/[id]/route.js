@@ -29,10 +29,10 @@ export async function PATCH(req) {
 
     await connectDB();
 
-    // Update the product's isActive field to false
+    const product = await Product.findById(id);
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      { isActive: false },
+      { isActive: !product.isActive },
       { new: true } // return updated document
     );
     console.log(updatedProduct)
@@ -40,10 +40,7 @@ export async function PATCH(req) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      message: "Product marked as inactive successfully",
-      product: updatedProduct,
-    });
+    return NextResponse.json({updatedProduct});
   } catch (error) {
     console.error("Error in PATCH /products/[id]:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

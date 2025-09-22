@@ -123,7 +123,7 @@ export default function MyProfilePage() {
 
     if (!res.ok) throw new Error("Failed to toggle product");
 
-    const updatedProduct = await res.json();
+    const {updatedProduct} = await res.json();
 
     // ✅ Update the local state to reflect changes instantly
     setProductsByUser((prev) =>
@@ -158,7 +158,7 @@ export default function MyProfilePage() {
       <div className="w-screen h-screen flex flex-col gap-4 justify-center items-center">
         <PageLoader />
         <h1 className="mt-6 text-xl font-semibold text-gray-500 animate-pulse">
-          Please wait, this might take some time to load...
+          Please wait, this might take some time...
         </h1>
       </div>
     );
