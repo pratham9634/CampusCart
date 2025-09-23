@@ -150,7 +150,7 @@ export default function UserPage() {
               key={p._id}
               className="group block"
             >
-              <div className="bg-white border border-gray-200 p-6 rounded-2xl h-full shadow-sm transition-all duration-300 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1">
+              <div className="bg-white border border-gray-200 p-6 rounded-2xl h-full shadow-sm transition-all duration-300 hover:border-purple-700 hover:shadow-lg hover:-translate-y-1">
                 <div className="flex justify-between items-start">
                   <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-500 transition-colors">
                     {p.title}
