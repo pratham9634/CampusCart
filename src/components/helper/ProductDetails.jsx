@@ -144,7 +144,7 @@ const ProductDetails = ({ product, bid }) => {
     </div>
 
     {/* Right: Product Info */}
-    <div className="flex flex-col gap-3 min-w-0 break-words">
+    <div className="flex flex-col gap-3 flex-1 break-words">
       <h1 className="text-2xl font-bold text-purple-700 break-words">
         {product.title}
       </h1>
@@ -189,7 +189,12 @@ const ProductDetails = ({ product, bid }) => {
           {product.description || "No description provided."}
         </p>
       </div>
-
+       <p className="break-words">
+               <span className="font-semibold text-green-700">Contact Info :</span>{" "}
+                <span className="text-purple-600 font-medium">
+                  {product?.phone || "N/A"}
+                </span>
+              </p>
       {/* location */}
       {product.college && (
         <div>
@@ -235,11 +240,12 @@ const ProductDetails = ({ product, bid }) => {
                 {seller?.name ? `Seller : ${seller?.name}` : "Seller Name: N/A"}
               </button>
               <p className="break-words">
-                Email:{" "}
+                Email :{" "}
                 <span className="text-purple-600 font-medium">
                   {seller?.email || "N/A"}
                 </span>
               </p>
+             
               <p className="text-blue-800 text-md">
                 Member since{" "}
                 {seller.memberSince
