@@ -1,20 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    experimental: {
+  experimental: {
     serverActions: {
       bodySizeLimit: '50mb',
     },
   },
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',   // or your specific Cloudinary custom domain
-        port: '',                        // usually empty unless using a custom port
-        pathname: '/**',                 // allow any path
+        hostname: '**',   // or your specific Cloudinary domain
+        port: '',          // leave empty unless using a custom port
+        pathname: '/**',   // allow all paths
       },
     ],
-  }
+  },
 };
 
 export default nextConfig;

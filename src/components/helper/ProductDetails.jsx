@@ -68,80 +68,93 @@ const ProductDetails = ({ product, bid }) => {
   <div className="w-full mx-auto mt-14 p-4 flex flex-col md:flex-row gap-6">
     {/* Left: Product Media */}
     <div className="w-full md:w-[40vw] flex flex-col items-center gap-6">
-      {media.length > 0 && (
-        <>
-          <div className="w-full h-[200px] md:h-[300px] relative rounded-xl overflow-hidden shadow-xl group">
-            {media[currentIndex].isImage ? (
-              <Image
-                src={media[currentIndex].src || "/default_items.webp"}
-                alt={`${product.title} - media ${currentIndex + 1}`}
-                fill
-                className="object-cover transition-transform duration-300 ease-in-out"
-                priority
-              />
-            ) : (
-              <video
-                src={media[currentIndex].src}
-                controls
-                className="w-full h-full object-cover rounded-xl"
-              />
-            )}
-
-            {/* Prev/Next Buttons */}
-            {media.length > 1 && (
-              <>
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 text-gray-700 hover:bg-purple-200 hover:scale-110 transition-transform duration-200 opacity-0 group-hover:opacity-100 z-10"
-                  aria-label="Previous media"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 text-gray-700 hover:bg-green-200 hover:scale-110 transition-transform duration-200 opacity-0 group-hover:opacity-100 z-10"
-                  aria-label="Next media"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Thumbnails */}
-          {media.length > 1 && (
-            <div className="flex flex-wrap justify-center gap-3 mt-4 w-full">
-              {media.map((item, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer hover:opacity-80 transition ${
-                    currentIndex === idx ? "border-purple-500" : "border-transparent"
-                  }`}
-                >
-                  {item.isImage ? (
-                    <Image
-                      src={item.src}
-                      alt={`Thumbnail ${idx + 1}`}
-                      width={80}
-                      height={80}
-                      className="object-cover w-full h-full"
-                    />
-                  ) : (
-                    <video
-                      src={item.src}
-                      className="w-full h-full object-cover"
-                      muted
-                      loop
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+  {/* Default Image when no media */}
+  {media.length === 0 && (
+    <div className="w-full h-[50vh] relative">
+      <Image
+        src="/default_items.webp"
+        alt="Default Image"
+        fill
+        className="object-cover transition-transform duration-300 ease-in-out"
+      />
     </div>
+  )}
+
+  {/* Media Carousel */}
+  {media.length > 0 && (
+    <>
+      <div className="w-full h-[200px] md:h-[300px] relative rounded-4xl overflow-hidden shadow-xl group ">
+        {media[currentIndex].isImage ? (
+          <Image
+            src={media[currentIndex].src || "/default_items.webp"}
+            alt={`${product.title} - media ${currentIndex + 1}`}
+            fill
+            className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+          />
+        ) : (
+          <video
+            src={media[currentIndex].src}
+            controls
+            className="w-full h-full object-cover rounded-xl"
+          />
+        )}
+
+        {/* Prev/Next Buttons */}
+        {media.length > 1 && (
+          <>
+            <button
+              onClick={handlePrev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 text-gray-700 hover:bg-purple-200 hover:scale-110 transition-transform duration-200 opacity-0 group-hover:opacity-100 z-10"
+              aria-label="Previous media"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={handleNext}
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 text-gray-700 hover:bg-green-200 hover:scale-110 transition-transform duration-200 opacity-0 group-hover:opacity-100 z-10"
+              aria-label="Next media"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      {media.length > 1 && (
+        <div className="flex flex-wrap justify-center gap-3 mt-4 w-full">
+          {media.map((item, idx) => (
+            <div
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer hover:opacity-80 transition ${
+                currentIndex === idx ? "border-purple-500" : "border-transparent"
+              }`}
+            >
+              {item.isImage ? (
+                <Image
+                  src={item.src}
+                  alt={`Thumbnail ${idx + 1}`}
+                  width={80}
+                  height={80}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <video
+                  src={item.src}
+                  className="w-full h-full object-cover"
+                  muted
+                  loop
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  )}
+</div>
+
 
     {/* Right: Product Info */}
     <div className="flex flex-col gap-3 flex-1 break-words">
