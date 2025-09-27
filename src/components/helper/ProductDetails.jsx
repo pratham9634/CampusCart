@@ -42,19 +42,23 @@ const ProductDetails = ({ product, currentUser }) => {
 
   // Fetch all bids from API on mount
   useEffect(() => {
-    const fetchBids = async () => {
-      try {
-        const res = await fetch(`/api/bids/${product._id}`);
-        if (!res.ok) throw new Error("Failed to fetch bids");
-        const data = await res.json();
-        setBids(data.sort((a, b) => b.amount - a.amount));
-        if (data.length > 0) setHighestBid(data[0]);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+  const fetchBids = async () => {
+    try {
+      const productId = product._id;
+      const res = await fetch(`/api/bids/${productId}`);
+      if (!res.ok) throw new Error("Failed to fetch bids");
+      const data = await res.json();
+      setBids(data.sort((a, b) => b.amount - a.amount));
+      if (data.length > 0) setHighestBid(data[0]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  if (product?._id) {
     fetchBids();
-  }, [product._id]);
+  }
+}, [product._id]);
+
 
   // Build media array
   useEffect(() => {
