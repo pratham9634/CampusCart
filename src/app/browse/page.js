@@ -25,7 +25,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -69,10 +74,14 @@ const BrowseWithSidebar = () => {
       <CardContent className="space-y-4">
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Category</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Category
+          </label>
           <Select
             value={category || "all"}
-            onValueChange={(val) => dispatch(setCategory(val === "all" ? "" : val))}
+            onValueChange={(val) =>
+              dispatch(setCategory(val === "all" ? "" : val))
+            }
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All Categories" />
@@ -90,7 +99,9 @@ const BrowseWithSidebar = () => {
 
         {/* Listing Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Listing Type</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Listing Type
+          </label>
           <Select
             value={listingType || "any"}
             onValueChange={(val) =>
@@ -110,7 +121,9 @@ const BrowseWithSidebar = () => {
 
         {/* Price Range */}
         <div>
-          <label className="text-sm font-medium text-gray-700">Price Range</label>
+          <label className="text-sm font-medium text-gray-700">
+            Price Range
+          </label>
           <div className="flex space-x-2">
             <Input
               type="number"
@@ -155,7 +168,11 @@ const BrowseWithSidebar = () => {
             <div className="lg:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="text-purple-600 border-purple-600">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="text-purple-600 border-purple-600"
+                  >
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
@@ -200,7 +217,7 @@ const BrowseWithSidebar = () => {
         {/* Products grid */}
         {status === "loading" ? (
           <div className="flex justify-center items-center h-64">
-            <PageLoader/>
+            <PageLoader />
           </div>
         ) : status === "failed" ? (
           <p className="text-center text-red-500">Error: {error}</p>
@@ -208,76 +225,107 @@ const BrowseWithSidebar = () => {
           <p className="text-center text-gray-500">No products found.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.filter((product) => product.isActive).map((product) => (
-              <Link
-                key={product._id || product.id}
-                href={`/product/${product._id || product.id}`}
-              >
-               <Card className="w-full p-0 pb-2 bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group">
-  {/* Product Image */}
-  <div className="relative w-full h-26 ">
-    {product?.type === "auction" && (
-  <div className="absolute z-1 top-3 right-2 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-yellow-700 text-white text-sm font-bold shadow-lg animate-bounce">
-    🔥 Auction
-  </div>
-)}
+            {products
+              .filter((product) => product.isActive)
+              .map((product) => (
+                <Link
+                  key={product._id || product.id}
+                  href={`/product/${product._id || product.id}`}
+                >
+                  <Card className="w-full p-0 pb-2 bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group">
+                    {/* Product Image */}
+                    <div className="relative w-full h-26 ">
+                      {product?.type === "auction" && (
+                        <div className="absolute z-1 top-3 right-2 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-yellow-700 text-white text-sm font-bold shadow-lg animate-bounce">
+                          🔥 Auction
+                        </div>
+                      )}
 
-    <Image
-      src={product.images?.[0] || "/default_items.webp"}
-      alt={product.title}
-      fill
-      className="object-cover   w-full h-full transition-transform duration-500 group-hover:scale-105"
-    />
-  </div>
+                      <Image
+                        src={product.images?.[0] || "/default_items.webp"}
+                        alt={product.title}
+                        fill
+                        className="object-cover   w-full h-full transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
 
-  {/* Product Info */}
-  <CardFooter className="flex flex-col p-1 gap-1">
-    {/* Title */}
-    <h3 className="font-semibold text-lg md:text-xl text-purple-700 line-clamp-2">
-      {product.title}
-    </h3>
+                    {/* Product Info */}
+                    <CardFooter className="flex flex-col p-1 gap-1">
+                      {/* Title */}
+                      <h3 className="font-semibold text-lg md:text-xl text-purple-700 line-clamp-2">
+                        {product.title}
+                      </h3>
 
-  {/* Description */}
-<div className="relative max-w-full">
-  <p className="text-gray-600 text-sm md:text-base line-clamp-1">
-    {product.description || "No description available."}
-  </p>
-  {/* Optional fade effect for extra polish */}
-  <div className="absolute bottom-0 right-0 h-6 w-12  pointer-events-none"></div>
-</div>
+                      {/* Description */}
+                      <div className="relative max-w-full">
+                        <p className="text-gray-600 text-sm md:text-base line-clamp-1">
+                          {product.description || "No description available."}
+                        </p>
+                        {/* Optional fade effect for extra polish */}
+                        <div className="absolute bottom-0 right-0 h-6 w-12 pointer-events-none"></div>
+                      </div>
 
+                      {/* Price & Bid Info */}
+                      <div className="text-orange-500 font-bold text-lg md:text-xl flex items-baseline gap-2">
+                        {/* This block checks if the product is an auction and has a highest bid */}
+                        {product.type === "auction" &&
+                        product.highestBid?.amount > 0 ? (
+                          <>
+                            <span>
+                              ₹{product.highestBid.amount.toLocaleString()}
+                            </span>
+                            <span className="text-sm font-medium text-gray-500">
+                              Current Bid
+                            </span>
+                          </>
+                        ) : product.type === "auction" ? (
+                          <>
+                            {/* If it's an auction with no bids, show the starting price */}
+                            <span>
+                              ₹{product.price?.toLocaleString() || "N/A"}
+                            </span>
+                            <span className="text-sm font-medium text-gray-500">
+                              Starting Bid
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            {/* Otherwise, show the regular price for a normal sale */}
+                            <span>
+                              ₹{product.price?.toLocaleString() || "N/A"}
+                            </span>
+                          </>
+                        )}
+                      </div>
 
-    {/* Price */}
-    <p className="text-orange-500 font-bold text-lg md:text-xl">
-      ₹{product.price?.toLocaleString() || "N/A"}
-    </p>
+                      {/* Category Bubble */}
+                      <div className="flex items-center justify-between gap-1">
+                        {product.category && (
+                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full cursor-default">
+                            {product.category}
+                          </span>
+                        )}
 
-    {/* Category Bubble */}
-   <div className="flex items-center justify-between gap-1">
-     {product.category && (
-      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full cursor-default">
-        {product.category}
-      </span>
-    )}
+                        {/* Time Posted */}
+                        <p className="text-gray-400 text-xs">
+                          Posted{" "}
+                          {product.createdAt
+                            ? `${Math.floor(
+                                (new Date() - new Date(product.createdAt)) /
+                                  (1000 * 60 * 60 * 24)
+                              )} day(s) ago`
+                            : "N/A"}
+                        </p>
+                      </div>
 
-    {/* Time Posted */}
-    <p className="text-gray-400 text-xs">
-      Posted {product.createdAt ? `${Math.floor((new Date() - new Date(product.createdAt)) / (1000 * 60 * 60 * 24))} day(s) ago` : "N/A"}
-    </p>
-   </div>
-
-    {/* View Product Button */}
-    <Button
-      className="mt-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-2 px-4 transition-colors w-full"
-    >
-      View Product
-    </Button>
-  </CardFooter>
-</Card>
-
-
-              </Link>
-            ))}
+                      {/* View Product Button */}
+                      <Button className="mt-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-2 px-4 transition-colors w-full">
+                        View Product
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </Link>
+              ))}
           </div>
         )}
 

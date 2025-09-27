@@ -1,7 +1,9 @@
 {
   "name": "campuscart",
   "version": "0.1.0",
-  "private": true,
+  "private": true, 
+  "type": "module",
+  
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -24,6 +26,7 @@
     "dotenv": "^17.2.2",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "express": "^5.1.0",
     "formidable": "^3.5.4",
     "lucide-react": "^0.544.0",
     "mongodb": "^6.19.0",
