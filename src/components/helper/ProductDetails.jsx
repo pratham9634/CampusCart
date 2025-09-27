@@ -5,7 +5,7 @@ import Image from "next/image";
 import { getUserById } from "@/lib/clerk";
 import Loader from "./Loader";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Tag, ShieldCheck, Hammer, Phone, University, User, Mail, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, ShieldCheck, Hammer, Phone, University, User, Mail, CalendarDays, Clock } from "lucide-react";
 import { io } from "socket.io-client";
 
 let socket;
@@ -19,6 +19,46 @@ const ProductDetails = ({ product, currentUser }) => {
   const [bids, setBids] = useState([]);
   const [bidAmount, setBidAmount] = useState("");
   const [showBidsModal, setShowBidsModal] = useState(false);
+  
+  // --- ✅ NEW: State for the countdown timer ---
+  const [timeLeft, setTimeLeft] = useState("");
+  const [isAuctionEnded, setIsAuctionEnded] = useState(false);
+
+  // --- ✅ NEW: useEffect for the countdown timer ---
+useEffect(() => {
+  if (product.type !== "auction" || !product.auctionEndDate) return;
+
+  const calculateTimeLeft = () => {
+    const difference = new Date(product.auctionEndDate) - new Date();
+    if (difference > 0) {
+      setIsAuctionEnded(false);
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    } else {
+      setIsAuctionEnded(true);
+      return null;
+    }
+  };
+
+  const updateTime = () => {
+    const newTime = calculateTimeLeft();
+    if (newTime) {
+      setTimeLeft(`${newTime.days}d ${newTime.hours}h ${newTime.minutes}m ${newTime.seconds}s`);
+    } else {
+      setTimeLeft("Auction Ended");
+    }
+  };
+
+  updateTime(); // Update immediately on mount
+  const timer = setInterval(updateTime, 1000);
+
+  return () => clearInterval(timer);
+}, [product.auctionEndDate, product.type]);
+
 
   // Initialize Socket.IO and join product room
   useEffect(() => {
@@ -109,7 +149,7 @@ const ProductDetails = ({ product, currentUser }) => {
 
   return (
     <section className="w-full min-h-screen p-4 md:p-8 bg-slate-50 font-sans">
-      <div className=" mx-auto mt-10 p-4 lg:p-8">
+      <div className="container mx-auto mt-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           
           {/* Left Column: Media Gallery */}
@@ -164,11 +204,22 @@ const ProductDetails = ({ product, currentUser }) => {
               </div>
               <h1 className="text-3xl lg:text-4xl font-bold text-slate-800 break-words">{product.title}</h1>
             </div>
+            
+            {/* --- ✅ NEW: Auction Countdown Timer UI --- */}
+            {product.type === 'auction' && (
+              <div className={`p-4 rounded-xl border ${isAuctionEnded ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-1">
+                    <Clock size={16} />
+                    <span>{isAuctionEnded ? 'Auction Status' : 'Time Left'}</span>
+                </div>
+                <p className={`text-2xl font-bold ${isAuctionEnded ? 'text-red-600' : 'text-amber-900'}`}>{timeLeft || "Loading..."}</p>
+              </div>
+            )}
 
             {/* Price / Bidding */}
             <div className="p-4 bg-white rounded-xl border border-slate-200">
               <p className="text-sm text-slate-500">
-                {product.type === "auction" ? (highestBid ? "Current Bid" : "Starting Price") : "Price"}
+                {product.type === "auction" ? (highestBid?.amount > 0 ? "Current Bid" : "Starting Price") : "Price"}
               </p>
               <p className="text-4xl font-extrabold text-indigo-600 break-words">
                 ₹{displayPrice?.toLocaleString() || "N/A"}
@@ -179,8 +230,21 @@ const ProductDetails = ({ product, currentUser }) => {
             <div className="flex flex-col gap-3">
               {product.type === "auction" && (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <input type="number" placeholder="Enter your bid amount" className="flex-1 border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} />
-                  <button onClick={handleBid} className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-sm">Place Bid</button>
+                  <input 
+                    type="number" 
+                    placeholder={isAuctionEnded ? "Auction has ended" : "Enter your bid amount"}
+                    className="flex-1 border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100" 
+                    value={bidAmount} 
+                    onChange={(e) => setBidAmount(e.target.value)} 
+                    disabled={isAuctionEnded} // ✅ Disable input when auction ends
+                  />
+                  <button 
+                    onClick={handleBid} 
+                    className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={isAuctionEnded} // ✅ Disable button when auction ends
+                  >
+                    Place Bid
+                  </button>
                 </div>
               )}
                <div className="flex flex-col sm:flex-row gap-2 flex-wrap">

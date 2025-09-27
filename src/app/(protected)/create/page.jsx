@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import toast, { Toaster } from "react-hot-toast";
 import Loader from "@/components/helper/Loader";
+import { Clock } from "lucide-react";
 
 const Page = () => {
   const { user } = useUser();
@@ -21,9 +22,9 @@ const Page = () => {
     video: null,
     email: "",
     phone: "",
-    // new fields
     college: "",
-    condition: "used",  // default value
+    condition: "used",
+    auctionDuration: 3, // Default auction duration in days
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,6 +81,7 @@ const Page = () => {
 
     try {
       const data = new FormData();
+      // Loop through formData and append everything
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "images") {
           value.forEach((img) => data.append("images", img));
@@ -89,9 +91,8 @@ const Page = () => {
           data.append(key, value);
         }
       });
-
-      console.log([...data.entries()]);
-      console.log(formData);
+      
+      // If the type is not 'auction', the server can simply ignore the 'auctionDuration' field.
 
       const response = await fetch("/api/create", { method: "POST", body: data });
       const result = await response.json();
@@ -111,7 +112,8 @@ const Page = () => {
         email: user?.primaryEmailAddress?.emailAddress || "",
         phone: "",
         college: "",
-        condition: "new",
+        condition: "used",
+        auctionDuration: 3, // Reset to default
       });
 
       if (imageInputRef.current) imageInputRef.current.value = "";
@@ -125,12 +127,12 @@ const Page = () => {
   };
 
   return (
-    <main className="min-h-screen w-full pt-12 p-2 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-pink-100">
+    <main className="min-h-screen w-full pt-12 p-2 flex flex-col items-center justify-center bg-slate-50">
       <Toaster position="top-right" reverseOrder={false} />
 
       {/* Greeting Section */}
-      <div className="w-full bg-white rounded-2xl shadow-xl p-2 mt-8 text-center border-t-4 border-purple-600">
-        <h1 className="text-lg md:text-xl font-extrabold text-purple-700 ">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 mt-8 text-center border-t-4 border-indigo-600">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-indigo-700 ">
           Welcome to CampusMart!
         </h1>
         <p className="text-gray-700 mt-2">
@@ -142,13 +144,13 @@ const Page = () => {
       </div>
 
       {/* Listing Form Section */}
-      <div className="w-[80vw] bg-white rounded-2xl shadow-xl px-8 pt-2 mt-4 border-t-4 border-orange-500">
-        <h2 className="text-md font-bold text-blue-600 mb-2 text-center">List Your Item</h2>
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg px-8 py-6 mt-4 border-t-4 border-orange-500">
+        <h2 className="text-xl font-bold text-slate-700 mb-6 text-center">List Your Item</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
           {/* Item Title */}
           <div>
-            <label className="block  font-semibold text-gray-700">Item Title</label>
+            <label className="block font-semibold text-gray-700">Item Title</label>
             <input
               type="text"
               name="title"
@@ -156,7 +158,7 @@ const Page = () => {
               onChange={handleInputChange}
               placeholder="Ex: MacBook Pro 2019"
               required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none hover:border-blue-400 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none hover:border-indigo-400 transition-all"
             />
           </div>
 
@@ -170,7 +172,7 @@ const Page = () => {
               required
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
             >
-              <option value="stationery">Select a Category</option>
+              <option value="" disabled>Select a Category</option>
               {categoriesData.map((cat) => (
                 <option key={cat.id} value={cat.title}>
                   {cat.title}
@@ -187,32 +189,58 @@ const Page = () => {
               value={formData.type}
               onChange={handleInputChange}
               required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none hover:border-purple-500 transition-all"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none hover:border-indigo-500 transition-all"
             >
-              <option value="sale">Sale</option>
-              <option value="auction">Auction</option>
+              <option value="sale">For Sale (Fixed Price)</option>
+              <option value="auction">Auction (Bidding)</option>
             </select>
-            <small className="text-gray-500 text-sm">
-              Choose Auction to allow users to bid.
-            </small>
           </div>
+          
+          {/* --- NEW: Auction Duration Field --- */}
+          {formData.type === 'auction' && (
+            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <label htmlFor="auctionDuration" className="flex items-center gap-2 font-semibold text-gray-700 mb-2">
+                <Clock size={20} className="text-indigo-600" />
+                Auction Duration
+              </label>
+              <select
+                id="auctionDuration"
+                name="auctionDuration"
+                value={formData.auctionDuration}
+                onChange={handleInputChange}
+                required
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none hover:border-indigo-500 transition-all"
+              >
+                {[3, 4, 5, 6, 7].map(day => (
+                  <option key={day} value={day}>{day} days</option>
+                ))}
+              </select>
+              <small className="text-gray-500 text-sm mt-1 block">
+                Your auction will automatically end after the selected duration.
+              </small>
+            </div>
+          )}
 
           {/* Price */}
           <div>
-            <label className="block  font-semibold text-gray-700">Price</label>
+            <label className="block font-semibold text-gray-700">
+                {formData.type === 'auction' ? 'Starting Price (₹)' : 'Price (₹)'}
+            </label>
             <input
               type="number"
               name="price"
               value={formData.price}
               onChange={handleInputChange}
-              placeholder="Ex: 50000"
+              placeholder="Enter amount in INR"
               min="0"
               required
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none hover:border-blue-500 transition-all"
             />
           </div>
 
-          {/* Condition */}
+          {/* ... (rest of the form remains the same) ... */}
+          
+           {/* Condition */}
           <div>
             <label className="block font-semibold text-gray-700">Condition</label>
             <select
@@ -269,7 +297,7 @@ const Page = () => {
             />
             <div className="flex gap-3 mt-3 flex-wrap">
               {formData.images.map((img, index) => (
-                <div key={index} className="relative w-20 h-20 border rounded-md overflow-hidden">
+                <div key={index} className="relative w-24 h-24 border rounded-md overflow-hidden">
                   <img
                     src={URL.createObjectURL(img)}
                     alt={`image-${index}`}
@@ -282,20 +310,17 @@ const Page = () => {
                   >
                     ✕
                   </button>
-                  
                 </div>
               ))}
-             {/* Disclaimer */}
-  <p className="text-sm text-gray-800 italic">
-    Note: The <span className="font-semibold text-orange-600">first uploaded image</span> will be used as your product’s cover image.
-  </p>
-
             </div>
+             <p className="text-sm text-gray-600 italic mt-2">
+                Note: The <span className="font-semibold text-orange-600">first uploaded image</span> will be used as your product’s cover image.
+            </p>
           </div>
 
           {/* Upload Video */}
           <div>
-            <label className="block  font-semibold text-gray-700">Upload Video (Optional)</label>
+            <label className="block font-semibold text-gray-700">Upload Video (Optional)</label>
             <input
               type="file"
               accept="video/*"
@@ -304,15 +329,15 @@ const Page = () => {
               className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 transition-all"
             />
             {formData.video && (
-              <div className="mt-3 relative w-[250px]">
-                <video controls width="250" className="rounded-md border">
+              <div className="mt-3 relative w-full max-w-sm">
+                <video controls className="rounded-md border w-full">
                   <source src={URL.createObjectURL(formData.video)} type={formData.video.type} />
                   Your browser does not support the video tag.
                 </video>
                 <button
                   type="button"
                   onClick={handleRemoveVideo}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
                 >
                   ✕
                 </button>
@@ -321,62 +346,57 @@ const Page = () => {
           </div>
 
           {/* Contact Information */}
-          <div className="pt-2 border-t border-gray-200">
-            <h3 className="text-lg font-semibold mb-1 text-blue-600">Contact Information</h3>
-
-            {/* Email */}
-            <div>
-              <label className="block font-semibold text-gray-700">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="example@college.edu"
-                required
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none hover:border-blue-400 transition-all"
-              />
-              <small className="text-gray-500 text-sm">We’ll contact you via this email.</small>
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block  font-semibold text-gray-700">Phone Number (Optional)</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="Ex: +91 9********0"
-                className="w-full p-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
-              />
+          <div className="pt-4 border-t border-gray-200">
+            <h3 className="text-lg font-semibold mb-2 text-slate-700">Contact Information</h3>
+            <div className="space-y-4">
+                 <div>
+                    <label className="block font-semibold text-gray-700">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="example@college.edu"
+                      required
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none hover:border-blue-400 transition-all"
+                    />
+                    <small className="text-gray-500 text-sm">We’ll contact you via this email.</small>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700">Phone Number (Optional)</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="Ex: +91 9********0"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none hover:border-orange-500 transition-all"
+                    />
+                  </div>
             </div>
           </div>
 
           {/* Submit Button */}
-          <div className="text-center">
+          <div className="text-center pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-[20vw] py-2 rounded-lg font-semibold transition-all ${
+              className={`w-full sm:w-1/2 py-3 rounded-lg font-semibold text-white transition-all duration-300 shadow-lg ${
                 isSubmitting
-                  ? "bg-gradient-to-r from-red-600 to-orange-200 hover:from-purple-500 hover:to-orange-500 text-white cursor-not-allowed"
-                  : "bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white"
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
               }`}
             >
-              {isSubmitting ?<Loader/> : "List Item"}
+              {isSubmitting ? <Loader /> : "List My Item"}
             </button>
           </div>
         </form>
-        {/* Disclaimer */}
-<p className="text-sm text-black/80 font-semibold italic text-center">
-  Note: Please <span className="font-extrabold text-orange-600">delete this product</span> from your profile once it is sold.
-</p>
+         <p className="text-sm text-gray-600 italic text-center mt-4">
+             Note: Please <span className="font-semibold text-red-600">delete this product</span> from your profile once it is sold.
+        </p>
       </div>
-     
-
     </main>
   );
 };

@@ -13,7 +13,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ✅ Parse formData directly
     const formData = await req.formData();
 
     const title = formData.get("title");
@@ -25,15 +24,20 @@ export async function POST(req) {
     const phone = formData.get("phone");
     const college = formData.get("college");
     const condition = formData.get("condition");
+    
+    // --- ✅ NEW: Handle Auction Duration ---
+    const auctionDuration = formData.get("auctionDuration"); // e.g., "3", "7"
+
     if (!title || !category || !type || !price || !email) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
+
     // Handle images
     const images = [];
-    const imageFiles = formData.getAll("images"); // ✅ multiple files
+    const imageFiles = formData.getAll("images");
 
     for (const file of imageFiles) {
       const arrayBuffer = await file.arrayBuffer();
@@ -51,7 +55,7 @@ export async function POST(req) {
     }
 
     // Handle video
-    let video = null;
+    let videoUrl = null;
     const videoFile = formData.get("video");
     if (videoFile && videoFile.size > 0) {
       const arrayBuffer = await videoFile.arrayBuffer();
@@ -65,10 +69,19 @@ export async function POST(req) {
         stream.end(buffer);
       });
 
-      video = result.secure_url;
+      videoUrl = result.secure_url;
+    }
+
+    // --- ✅ NEW: Calculate auction end date if applicable ---
+    let auctionEndDate = null;
+    if (type === 'auction' && auctionDuration) {
+        const now = new Date();
+        // Calculate the end date by adding the duration (in days) to the current date
+        auctionEndDate = new Date(now.setDate(now.getDate() + parseInt(auctionDuration, 10)));
     }
 
     // Save to DB
+    // Note: Ensure your Product schema has a field for 'auctionEndDate' of type Date.
     const product = new Product({
       title,
       category,
@@ -76,18 +89,19 @@ export async function POST(req) {
       price,
       description,
       images,
-      video,
+      video: videoUrl,
       email,
       phone,
       college,
       condition,
       createdBy: userId,
+      auctionEndDate, // Add the calculated end date here
     });
 
     await product.save();
 
     return NextResponse.json(
-      { message: "Product created successfully"},
+      { message: "Product created successfully", product },
       { status: 201 }
     );
   } catch (err) {
