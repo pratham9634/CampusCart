@@ -10,6 +10,7 @@ import {
   setListingType,
   setPage,
   setPriceRange,
+  setCollege, // ✅ new import
 } from "@/redux/browseSlice";
 import { categoriesData } from "@/constants/categories";
 import Link from "next/link";
@@ -53,6 +54,7 @@ const BrowseWithSidebar = () => {
     listingType,
     priceMin,
     priceMax,
+    college, // ✅ new
     page,
     productsPerPage,
     total,
@@ -60,12 +62,22 @@ const BrowseWithSidebar = () => {
 
   useEffect(() => {
     dispatch(fetchProducts());
-  }, [search, sort, category, listingType, priceMin, priceMax, page, dispatch]);
+  }, [
+    search,
+    sort,
+    category,
+    listingType,
+    priceMin,
+    priceMax,
+    college,
+    page,
+    dispatch,
+  ]); // ✅ added college
 
   const totalPages =
     productsPerPage && total ? Math.ceil(total / productsPerPage) : 1;
 
-  // Sidebar filters (Category, Listing Type, Price)
+  // Sidebar filters
   const SidebarFilters = (
     <Card className="shadow-md border border-gray-200 h-full">
       <CardHeader>
@@ -113,8 +125,8 @@ const BrowseWithSidebar = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="new">Buy</SelectItem>
-              <SelectItem value="used">Bid</SelectItem>
+              <SelectItem value="sale">Buy</SelectItem>
+              <SelectItem value="auction">Auction</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -144,6 +156,20 @@ const BrowseWithSidebar = () => {
               }
             />
           </div>
+        </div>
+
+        {/* College Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            College
+          </label>
+          <Input
+            type="text"
+            placeholder="Enter college name"
+            value={college || ""}
+            onChange={(e) => dispatch(setCollege(e.target.value))}
+            className="w-full"
+          />
         </div>
       </CardContent>
     </Card>
@@ -232,97 +258,86 @@ const BrowseWithSidebar = () => {
                   key={product._id || product.id}
                   href={`/product/${product._id || product.id}`}
                 >
-                  <Card className="w-full p-0 pb-2 bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group">
+                  <Card className="flex flex-col w-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group">
                     {/* Product Image */}
-                    <div className="relative w-full h-26 ">
-                      {product?.type === "auction" && (
-                        <div className="absolute z-1 top-3 right-2 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-yellow-700 text-white text-sm font-bold shadow-lg animate-bounce">
-                          🔥 Auction
-                        </div>
-                      )}
-
+                    <div className="relative w-full aspect-video overflow-hidden">
                       <Image
                         src={product.images?.[0] || "/default_items.webp"}
                         alt={product.title}
                         fill
-                        className="object-cover   w-full h-full transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                       />
+
+                      {/* Modern Auction Badge */}
+                      {product?.type === "auction" && (
+                        <div className="absolute z-10 top-3 right-3 px-3 py-1 rounded-full bg-red-400/80 backdrop-blur-sm text-white text-xs font-semibold animate-bounce">
+                          🔥 Auction
+                        </div>
+                      )}
                     </div>
 
-                    {/* Product Info */}
-                    <CardFooter className="flex flex-col p-1 gap-1">
+                    {/* Product Info Wrapper */}
+                    <div className="flex flex-col flex-1 p-4">
+                      {/* Tags: Category & College */}
+                      <div className="flex items-center gap-2 mb-2">
+                        {product.category && (
+                          <span className="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
+                            {product.category}
+                          </span>
+                        )}
+                        {product.college && (
+                          <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-800 text-xs font-medium rounded-full truncate">
+                            🎓 {product.college}
+                          </span>
+                        )}
+                      </div>
+
                       {/* Title */}
-                      <h3 className="font-semibold text-lg md:text-xl text-purple-700 line-clamp-2">
+                      <h3 className="font-bold text-lg text-slate-800 line-clamp-2 leading-tight">
                         {product.title}
                       </h3>
 
                       {/* Description */}
-                      <div className="relative max-w-full">
-                        <p className="text-gray-600 text-sm md:text-base line-clamp-1">
-                          {product.description || "No description available."}
-                        </p>
-                        {/* Optional fade effect for extra polish */}
-                        <div className="absolute bottom-0 right-0 h-6 w-12 pointer-events-none"></div>
-                      </div>
+                      <p className="text-slate-500 text-sm line-clamp-1 mt-1">
+                        {product.description || "No description available."}
+                      </p>
 
                       {/* Price & Bid Info */}
-                      <div className="text-orange-500 font-bold text-lg md:text-xl flex items-baseline gap-2">
-                        {/* This block checks if the product is an auction and has a highest bid */}
-                        {product.type === "auction" &&
-                        product.highestBid?.amount > 0 ? (
-                          <>
-                            <span>
-                              ₹{product.highestBid.amount.toLocaleString()}
-                            </span>
-                            <span className="text-sm font-medium text-gray-500">
-                              Current Bid
-                            </span>
-                          </>
-                        ) : product.type === "auction" ? (
-                          <>
-                            {/* If it's an auction with no bids, show the starting price */}
-                            <span>
-                              ₹{product.price?.toLocaleString() || "N/A"}
-                            </span>
-                            <span className="text-sm font-medium text-gray-500">
-                              Starting Bid
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            {/* Otherwise, show the regular price for a normal sale */}
-                            <span>
-                              ₹{product.price?.toLocaleString() || "N/A"}
-                            </span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Category Bubble */}
-                      <div className="flex items-center justify-between gap-1">
-                        {product.category && (
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full cursor-default">
-                            {product.category}
+                      <div className="mt-3 flex items-baseline gap-2">
+                        <span className="text-2xl font-extrabold text-orange-600">
+                          {product.type === "auction" &&
+                          product.highestBid?.amount > 0
+                            ? `₹${product.highestBid.amount.toLocaleString()}`
+                            : `₹${product.price?.toLocaleString() || "N/A"}`}
+                        </span>
+                        {product.type === "auction" && (
+                          <span className="text-sm font-medium text-slate-500">
+                            {product.highestBid?.amount > 0
+                              ? "Current Bid"
+                              : "Starting Bid"}
                           </span>
                         )}
-
-                        {/* Time Posted */}
-                        <p className="text-gray-400 text-xs">
-                          Posted{" "}
-                          {product.createdAt
-                            ? `${Math.floor(
-                                (new Date() - new Date(product.createdAt)) /
-                                  (1000 * 60 * 60 * 24)
-                              )} day(s) ago`
-                            : "N/A"}
-                        </p>
                       </div>
 
+                      {/* Spacer to push button and time to the bottom */}
+                      <div className="flex-1" />
+
+                      {/* Time Posted */}
+                      <p className="text-slate-400 text-xs text-right mt-4">
+                        Posted{" "}
+                        {product.createdAt
+                          ? `${Math.floor(
+                              (new Date() - new Date(product.createdAt)) /
+                                (1000 * 60 * 60 * 24)
+                            )}d ago`
+                          : "N/A"}
+                      </p>
+
                       {/* View Product Button */}
-                      <Button className="mt-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-2 px-4 transition-colors w-full">
+                      <Button className="w-full mt-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg py-2.5 transition-colors">
                         View Product
                       </Button>
-                    </CardFooter>
+                    </div>
                   </Card>
                 </Link>
               ))}

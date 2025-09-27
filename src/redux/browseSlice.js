@@ -1,4 +1,3 @@
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 // Async thunk for fetching products from API
@@ -7,7 +6,15 @@ export const fetchProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     const state = thunkAPI.getState();
     const {
-      search, category, sort, listingType, priceMin, priceMax, page, productsPerPage
+      search,
+      category,
+      sort,
+      listingType,
+      priceMin,
+      priceMax,
+      college,         // <-- new
+      page,
+      productsPerPage,
     } = state.productBrowse;
 
     // Build query string
@@ -18,6 +25,7 @@ export const fetchProducts = createAsyncThunk(
     if (listingType) params.set("listingType", listingType);
     if (priceMin != null && priceMin !== "") params.set("priceMin", priceMin);
     if (priceMax != null && priceMax !== "") params.set("priceMax", priceMax);
+    if (college) params.set("college", college);  // <-- new
     params.set("page", page);
     params.set("limit", productsPerPage);
 
@@ -34,9 +42,10 @@ const productBrowseSlice = createSlice({
     search: "",
     category: "",
     sort: "latest",
-    listingType: "",    // e.g. auction,sale
+    listingType: "",    // e.g. auction, sale
     priceMin: null,
     priceMax: null,
+    college: "",        // <-- new
     page: 1,
     productsPerPage: 12,
     products: [],
@@ -67,6 +76,10 @@ const productBrowseSlice = createSlice({
       state.priceMax = max;
       state.page = 1;
     },
+    setCollege(state, action) {       // <-- new reducer
+      state.college = action.payload;
+      state.page = 1;
+    },
     setPage(state, action) {
       state.page = action.payload;
     },
@@ -77,6 +90,7 @@ const productBrowseSlice = createSlice({
       state.listingType = "";
       state.priceMin = null;
       state.priceMax = null;
+      state.college = "";    // <-- reset college
       state.page = 1;
     },
   },
@@ -94,7 +108,7 @@ const productBrowseSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message;
       });
-  }
+  },
 });
 
 export const {
@@ -103,6 +117,7 @@ export const {
   setSort,
   setListingType,
   setPriceRange,
+  setCollege,    // <-- export it
   setPage,
   resetFilters,
 } = productBrowseSlice.actions;
