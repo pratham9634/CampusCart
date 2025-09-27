@@ -25,14 +25,9 @@ export async function GET(req, { params }) {
       });
     }
 
-    console.log("🔌 Connecting to DB...");
     await connectDB();
-    console.log("✅ DB connected");
 
-    console.log("📡 Fetching bids for product:", product_Id);
     const bids = await Bid.find({ product: product_Id }).sort({ amount: -1 });
-
-    console.log("✅ Bids fetched:", bids);
 
     return new Response(JSON.stringify(bids), {
       status: 200,
