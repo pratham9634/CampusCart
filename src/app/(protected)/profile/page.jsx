@@ -7,7 +7,21 @@ import Link from "next/link";
 import Image from "next/image";
 import PageLoader from "@/components/helper/PageLoader";
 import toast, { Toaster } from "react-hot-toast";
-import { User, Mail, Phone, University, Calendar, Edit, Save, X, Power, PowerOff, Shield, Trash2, UserCog } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  University,
+  Calendar,
+  Edit,
+  Save,
+  X,
+  Power,
+  PowerOff,
+  Shield,
+  Trash2,
+  UserCog,
+} from "lucide-react";
 
 export default function MyProfilePage() {
   const { user, isLoaded } = useUser();
@@ -15,6 +29,8 @@ export default function MyProfilePage() {
   const [usersList, setUsersList] = useState([]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingAdminIds, setLoadingAdminIds] = useState([]);
+  const [successAdminIds, setSuccessAdminIds] = useState([]);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -58,7 +74,11 @@ export default function MyProfilePage() {
           "",
         number: profile.publicMetadata?.number || "",
         memberSince: profile.createdAt
-          ? new Date(profile.createdAt).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })
+          ? new Date(profile.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
           : "",
       });
     }
@@ -103,58 +123,86 @@ export default function MyProfilePage() {
 
   const toggleProduct = async (productId) => {
     try {
-        const productToUpdate = productsByUser.find(p => p._id === productId);
-        if (!productToUpdate) return;
-        const res = await fetch(`/api/product/${productId}`, { method: "PATCH" });
-        if (!res.ok) throw new Error("Failed to toggle product");
-        const { updatedProduct } = await res.json();
-        setProductsByUser((prev) =>
-            prev.map((p) => (p._id === productId ? updatedProduct : p))
-        );
-        toast.success(
-            updatedProduct.isActive ? "Product activated." : "Product deactivated."
-        );
+      const productToUpdate = productsByUser.find((p) => p._id === productId);
+      if (!productToUpdate) return;
+      const res = await fetch(`/api/product/${productId}`, { method: "PATCH" });
+      if (!res.ok) throw new Error("Failed to toggle product");
+      const { updatedProduct } = await res.json();
+      setProductsByUser((prev) =>
+        prev.map((p) => (p._id === productId ? updatedProduct : p))
+      );
+      toast.success(
+        updatedProduct.isActive ? "Product activated." : "Product deactivated."
+      );
     } catch (err) {
-        console.error("Error toggling product:", err);
-        toast.error("Failed to update product.");
+      console.error("Error toggling product:", err);
+      toast.error("Failed to update product.");
     }
   };
 
   // ✅ --- NEW: Delete Product Functionality ---
   const deleteProduct = async (productId) => {
     // Confirm before deleting
-    if (!window.confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to permanently delete this product? This action cannot be undone."
+      )
+    ) {
       return;
     }
-    
-    try {
-        const res = await fetch(`/api/product/${productId}`, { method: 'DELETE' });
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to delete product");
-        }
 
-        // Update UI instantly by removing the product from state
-        setProductsByUser(prev => prev.filter(p => p._id !== productId));
-        toast.success("Product deleted successfully.");
+    try {
+      const res = await fetch(`/api/product/${productId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to delete product");
+      }
+
+      // Update UI instantly by removing the product from state
+      setProductsByUser((prev) => prev.filter((p) => p._id !== productId));
+      toast.success("Product deleted successfully.");
     } catch (err) {
-        console.error("Error deleting product:", err);
-        toast.error(err.message || "Failed to delete product.");
+      console.error("Error deleting product:", err);
+      toast.error(err.message || "Failed to delete product.");
     }
   };
 
   const makeAdmin = async (targetId) => {
-    const res = await fetch(`/api/users/${targetId}/make-admin`, {
-      method: "POST",
-    });
-    if (res.ok) {
+    if (loadingAdminIds.includes(targetId)) return; // prevent duplicate clicks
+    setLoadingAdminIds((prev) => [...prev, targetId]);
+
+    try {
+      const res = await fetch(`/api/users/${targetId}/make-admin`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to promote user");
+
+      // Update user list in real-time
+      setUsersList((prev) =>
+        prev.map((u) =>
+          u.id === targetId
+            ? { ...u, privateMetadata: { ...u.privateMetadata, role: "admin" } }
+            : u
+        )
+      );
+
+      // Trigger success animation
+      setSuccessAdminIds((prev) => [...prev, targetId]);
+      setTimeout(() => {
+        setSuccessAdminIds((prev) => prev.filter((id) => id !== targetId));
+      }, 1000); // 1s animation
+
       toast.success("User promoted to admin.");
-      setUsersList(prev => prev.map(u => u.id === targetId ? { ...u, publicMetadata: { ...u.publicMetadata, role: 'admin' } } : u));
-    } else {
+    } catch (err) {
+      console.error("Make admin error:", err);
       toast.error("Failed to promote user.");
+    } finally {
+      setLoadingAdminIds((prev) => prev.filter((id) => id !== targetId));
     }
   };
-  
+
   if (!isLoaded || !profile) {
     return (
       <div className="w-screen h-screen flex flex-col gap-4 justify-center items-center bg-slate-50">
@@ -170,13 +218,18 @@ export default function MyProfilePage() {
     <div className="min-h-screen mt-16 bg-slate-50 p-4 sm:p-6 md:p-8">
       <Toaster position="top-right" />
       <div className="max-w-5xl mx-auto space-y-8">
-        
         {/* Profile Card */}
         <section className="bg-white shadow-lg rounded-2xl border border-slate-200">
           <div className="p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
               <div className="flex items-center gap-4">
-                <Image src={profile.imageUrl} alt="Profile" width={80} height={80} className="rounded-full" />
+                <Image
+                  src={profile.imageUrl}
+                  alt="Profile"
+                  width={80}
+                  height={80}
+                  className="rounded-full"
+                />
                 <div>
                   <h1 className="text-3xl font-bold text-slate-800">
                     {form.firstName} {form.lastName}
@@ -188,30 +241,84 @@ export default function MyProfilePage() {
                 onClick={() => setEditing(!editing)}
                 className="mt-4 sm:mt-0 flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-lg transition-colors duration-300"
               >
-                {editing ? <><X size={16}/> Cancel</> : <><Edit size={16}/> Edit Profile</>}
+                {editing ? (
+                  <>
+                    <X size={16} /> Cancel
+                  </>
+                ) : (
+                  <>
+                    <Edit size={16} /> Edit Profile
+                  </>
+                )}
               </button>
             </div>
-            
+
             {!editing ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <div className="flex items-center gap-3"><Mail size={20} className="text-indigo-500" /><span className="text-slate-700">{form.email}</span></div>
-                <div className="flex items-center gap-3"><Phone size={20} className="text-indigo-500" /><span className="text-slate-700">{form.number || "Not set"}</span></div>
-                <div className="flex items-center gap-3"><University size={20} className="text-indigo-500" /><span className="text-slate-700">{form.college || "Not set"}</span></div>
-                <div className="flex items-center gap-3"><Calendar size={20} className="text-indigo-500" /><span className="text-slate-700">Member since {form.memberSince}</span></div>
+                <div className="flex items-center gap-3">
+                  <Mail size={20} className="text-indigo-500" />
+                  <span className="text-slate-700">{form.email}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone size={20} className="text-indigo-500" />
+                  <span className="text-slate-700">
+                    {form.number || "Not set"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <University size={20} className="text-indigo-500" />
+                  <span className="text-slate-700">
+                    {form.college || "Not set"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Calendar size={20} className="text-indigo-500" />
+                  <span className="text-slate-700">
+                    Member since {form.memberSince}
+                  </span>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
-                    <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
-                    <input name="college" value={form.college} onChange={handleChange} placeholder="College" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
-                    <input name="number" value={form.number} onChange={handleChange} placeholder="Phone Number" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
-                 </div>
-                 <div className="flex gap-4">
-                    <button onClick={save} disabled={saving} className="flex items-center gap-2 px-6 py-2 rounded-lg font-semibold transition text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400">
-                        <Save size={16}/> {saving ? "Saving..." : "Save Changes"}
-                    </button>
-                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    name="firstName"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    placeholder="First Name"
+                    className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <input
+                    name="lastName"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    placeholder="Last Name"
+                    className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <input
+                    name="college"
+                    value={form.college}
+                    onChange={handleChange}
+                    placeholder="College"
+                    className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <input
+                    name="number"
+                    value={form.number}
+                    onChange={handleChange}
+                    placeholder="Phone Number"
+                    className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={save}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 rounded-lg font-semibold transition text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400"
+                  >
+                    <Save size={16} /> {saving ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -219,36 +326,85 @@ export default function MyProfilePage() {
 
         {/* My Products Section */}
         <section>
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">My Products</h2>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">
+            My Products
+          </h2>
           <div className="bg-white shadow-lg rounded-2xl border border-slate-200 overflow-hidden">
             {productsByUser.length > 0 ? (
               <ul className="divide-y divide-slate-200">
                 {productsByUser.map((p) => (
-                  <li key={p._id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
-                    <Link href={`/product/${p._id}`} className="flex items-center gap-4 group">
-                      <Image src={p.images?.[0] || '/default_items.webp'} alt={p.title} width={64} height={64} className="rounded-lg aspect-square object-cover" />
+                  <li
+                    key={p._id}
+                    className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <Link
+                      href={`/product/${p._id}`}
+                      className="flex items-center gap-4 group"
+                    >
+                      <Image
+                        src={p.images?.[0] || "/default_items.webp"}
+                        alt={p.title}
+                        width={64}
+                        height={64}
+                        className="rounded-lg aspect-square object-cover"
+                      />
                       <div>
-                        <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{p.title}</h3>
-                        <p className="text-slate-500 text-sm">₹{p.price.toLocaleString()} - <span className={p.isActive ? 'text-green-600' : 'text-red-600'}>{p.isActive ? 'Active' : 'Inactive'}</span></p>
+                        <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                          {p.title}
+                        </h3>
+                        <p className="text-slate-500 text-sm">
+                          ₹{p.price.toLocaleString()} -{" "}
+                          <span
+                            className={
+                              p.isActive ? "text-green-600" : "text-red-600"
+                            }
+                          >
+                            {p.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </p>
                       </div>
                     </Link>
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
-                       <button onClick={() => toggleProduct(p._id)} className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-colors ${p.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-green-100 text-green-800 hover:bg-green-200"}`}>
-                         {p.isActive ? <><PowerOff size={14}/>Deactivate</> : <><Power size={14}/>Activate</>}
-                       </button>
-                       {/* ✅ --- NEW: Delete Button --- */}
-                       <button onClick={() => deleteProduct(p._id)} className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors">
-                         <Trash2 size={14}/> Delete
-                       </button>
+                      <button
+                        onClick={() => toggleProduct(p._id)}
+                        className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-colors ${
+                          p.isActive
+                            ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                            : "bg-green-100 text-green-800 hover:bg-green-200"
+                        }`}
+                      >
+                        {p.isActive ? (
+                          <>
+                            <PowerOff size={14} />
+                            Deactivate
+                          </>
+                        ) : (
+                          <>
+                            <Power size={14} />
+                            Activate
+                          </>
+                        )}
+                      </button>
+                      {/* ✅ --- NEW: Delete Button --- */}
+                      <button
+                        onClick={() => deleteProduct(p._id)}
+                        className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
               <div className="text-center p-12">
-                <p className="text-slate-500">You haven't listed any products yet.</p>
+                <p className="text-slate-500">
+                  You haven't listed any products yet.
+                </p>
                 <Link href="/create">
-                   <button className="mt-4 bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition-colors">List an Item</button>
+                  <button className="mt-4 bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    List an Item
+                  </button>
                 </Link>
               </div>
             )}
@@ -256,9 +412,11 @@ export default function MyProfilePage() {
         </section>
 
         {/* Admin Users Section */}
-        {profile.publicMetadata?.role === 'admin' && usersList.length > 0 && (
+        {profile.privateMetadata?.role === "admin" && usersList.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">All Users (Admin Panel)</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">
+              All Users (Admin Panel)
+            </h2>
             <div className="bg-white shadow-lg rounded-2xl border border-slate-200 overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-200 text-sm text-slate-600">
@@ -271,23 +429,66 @@ export default function MyProfilePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {usersList.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                    <tr
+                      key={u.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
                       <td className="p-4 flex items-center gap-3">
-                         <Image src={u.imageUrl} alt="" width={40} height={40} className="rounded-full" />
-                         <span className="font-medium text-slate-900">{u.firstName} {u.lastName}</span>
+                        <Image
+                          src={u.imageUrl}
+                          alt=""
+                          width={40}
+                          height={40}
+                          className="rounded-full"
+                        />
+                        <span className="font-medium text-slate-900">
+                          {u.firstName} {u.lastName}
+                        </span>
                       </td>
-                      <td className="p-4 text-slate-600">{u.emailAddresses[0]?.emailAddress}</td>
+                      <td className="p-4 text-slate-600">
+                        {u.emailAddresses[0]?.emailAddress}
+                      </td>
                       <td className="p-4">
-                        {u.publicMetadata?.role === 'admin' ? 
-                          <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Admin</span> : 
-                          <span className="px-2 py-1 text-xs font-semibold text-slate-700 bg-slate-100 rounded-full">User</span>
-                        }
+                        {u.privateMetadata?.role === "admin" ? (
+                          <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-semibold text-slate-700 bg-slate-100 rounded-full">
+                            User
+                          </span>
+                        )}
                       </td>
                       <td className="p-4 text-right">
-                        {u.publicMetadata?.role !== 'admin' && (
-                           <button onClick={() => makeAdmin(u.id)} className="flex items-center gap-1.5 ml-auto bg-yellow-100 text-yellow-800 hover:bg-yellow-200 font-semibold px-3 py-1.5 rounded-md text-sm transition-colors">
-                            <UserCog size={14}/> Make Admin
-                           </button>
+                        {u.privateMetadata?.role !== "admin" && (
+                          <button
+                            onClick={() => makeAdmin(u.id)}
+                            disabled={loadingAdminIds.includes(u.id)}
+                            className={`
+    flex items-center gap-1.5 ml-auto font-semibold px-3 py-1.5 rounded-md text-sm transition-all
+    ${
+      loadingAdminIds.includes(u.id)
+        ? "bg-yellow-200 text-yellow-900 cursor-not-allowed animate-pulse"
+        : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+    }
+    ${
+      successAdminIds.includes(u.id)
+        ? "scale-105 bg-green-100 text-green-800"
+        : ""
+    }
+  `}
+                          >
+                            {loadingAdminIds.includes(u.id) ? (
+                              <span className="flex items-center gap-1">
+                                <UserCog size={14} className="animate-spin" />{" "}
+                                Promoting...
+                              </span>
+                            ) : (
+                              <>
+                                <UserCog size={14} /> Make Admin
+                              </>
+                            )}
+                          </button>
                         )}
                       </td>
                     </tr>
