@@ -4,6 +4,7 @@ import Product from "@/model/Product";
 import Bid from "@/model/Bid";
 import { clerkClient, getAuth } from "@clerk/nextjs/server";
 import mongoose from "mongoose";
+import cloudinary from "@/lib/cloudinary";
 
 export async function GET(req) {
   const url = new URL(req.url);
@@ -58,77 +59,67 @@ export async function PATCH(req) {
   }
 }
 
+const extractPublicId = (url) => {
+  if (!url) return null;
+
+  // This regex looks for the part of the URL after a version number (like /v12345/)
+  // and captures everything until the final file extension.
+  const regex = /\/v\d+\/(.+)\.\w+$/;
+  const match = url.match(regex);
+
+  // match[1] will contain the captured group, which is the public ID.
+  return match ? match[1] : null;
+};
+
 export async function DELETE(req) {
   try {
     await connectDB();
 
-    // 1. Authentication: Ensure user is logged in
+    // Authentication
     const { userId } = getAuth(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const url = new URL(req.url);
-    const segments = url.pathname.split("/"); // split path by '/'
+    const segments = url.pathname.split("/");
     const productId = segments[segments.length - 1];
 
     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-      return NextResponse.json(
-        { error: "Invalid Product ID" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid Product ID" }, { status: 400 });
     }
 
-    // 2. Find the product in the database
     const product = await Product.findById(productId);
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
+    if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
-    // 3. Authorization: Check if the user is the owner or an admin
+    // Authorization
     const user = await (await clerkClient()).users.getUser(userId);
     const isAdmin = user.publicMetadata?.role === "admin";
-
     if (product.createdBy.toString() !== userId && !isAdmin) {
-      return NextResponse.json(
-        {
-          error: "Forbidden: You do not have permission to delete this product",
-        },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: No permission" }, { status: 403 });
     }
 
-    // 4. Delete associated assets from Cloudinary
-    // Delete images (if any)
+    // Delete images
     if (product.images && product.images.length > 0) {
-      const publicIds = product.images.map(extractPublicId).filter((id) => id);
+      const publicIds = product.images.map(imgUrl => extractPublicId(imgUrl)).filter(Boolean);
       if (publicIds.length > 0) {
-        // Deletes multiple resources at once
-        await cloudinary.api.delete_resources(publicIds);
+       const result = await cloudinary.api.delete_resources(publicIds);
+      console.log("Image deletion result:", result);
       }
     }
 
-    // Delete video (if it exists)
+    // Delete video
     if (product.video) {
-      const videoPublicId = extractPublicId(product.video);
-      if (videoPublicId) {
-        await cloudinary.uploader.destroy(videoPublicId, {
-          resource_type: "video",
-        });
+      const videoId = extractPublicId(product.video);
+      if (videoId) {
+        await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
       }
     }
 
-    // 5. Delete the product from the database
+    // Delete product from DB
     await Product.findByIdAndDelete(productId);
 
-    return NextResponse.json(
-      { message: "Product deleted successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "Product deleted successfully" }, { status: 200 });
   } catch (err) {
     console.error("🔥 API DELETE Error:", err);
-    return NextResponse.json(
-      { error: "Failed to delete product", details: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete product", details: err.message }, { status: 500 });
   }
 }
