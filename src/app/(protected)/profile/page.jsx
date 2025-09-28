@@ -25,6 +25,7 @@ import {
 
 export default function MyProfilePage() {
   const { user, isLoaded } = useUser();
+  const [deletingProductIds, setDeletingProductIds] = useState([]);
   const [profile, setProfile] = useState(null);
   const [usersList, setUsersList] = useState([]);
   const [editing, setEditing] = useState(false);
@@ -141,33 +142,41 @@ export default function MyProfilePage() {
   };
 
   // ✅ --- NEW: Delete Product Functionality ---
-  const deleteProduct = async (productId) => {
-    // Confirm before deleting
-    if (
-      !window.confirm(
-        "Are you sure you want to permanently delete this product? This action cannot be undone."
-      )
-    ) {
-      return;
+ const deleteProduct = async (productId) => {
+  if (!window.confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) {
+    return;
+  }
+
+  setDeletingProductIds((prev) => [...prev, productId]); // start loading
+
+  try {
+    const res = await fetch(`/api/product/${productId}`, { method: "DELETE" });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Failed to delete product");
     }
 
-    try {
-      const res = await fetch(`/api/product/${productId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to delete product");
-      }
-
-      // Update UI instantly by removing the product from state
+    // Animate removal before actually updating state
+    const element = document.getElementById(`product-${productId}`);
+    if (element) {
+      element.classList.add("opacity-0", "scale-95"); // tailwind fade+shrink
+      setTimeout(() => {
+        setProductsByUser((prev) => prev.filter((p) => p._id !== productId));
+        toast.success("Product deleted successfully.");
+      }, 300); // match transition duration
+    } else {
+      // fallback
       setProductsByUser((prev) => prev.filter((p) => p._id !== productId));
       toast.success("Product deleted successfully.");
-    } catch (err) {
-      console.error("Error deleting product:", err);
-      toast.error(err.message || "Failed to delete product.");
     }
-  };
+  } catch (err) {
+    console.error("Error deleting product:", err);
+    toast.error(err.message || "Failed to delete product.");
+  } finally {
+    setDeletingProductIds((prev) => prev.filter((id) => id !== productId));
+  }
+};
+
 
   const makeAdmin = async (targetId) => {
     if (loadingAdminIds.includes(targetId)) return; // prevent duplicate clicks
@@ -335,6 +344,7 @@ export default function MyProfilePage() {
                 {productsByUser.map((p) => (
                   <li
                     key={p._id}
+                    id={`product-${p._id}`}
                     className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
                   >
                     <Link
@@ -387,11 +397,20 @@ export default function MyProfilePage() {
                       </button>
                       {/* ✅ --- NEW: Delete Button --- */}
                       <button
-                        onClick={() => deleteProduct(p._id)}
-                        className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
-                      >
-                        <Trash2 size={14} /> Delete
-                      </button>
+  onClick={() => deleteProduct(p._id)}
+  disabled={deletingProductIds.includes(p._id)}
+  className={`
+    flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all
+    ${deletingProductIds.includes(p._id) ? "bg-red-200 text-red-900 cursor-not-allowed animate-pulse" : "bg-red-100 text-red-800 hover:bg-red-200"}
+  `}
+>
+  {deletingProductIds.includes(p._id) ? (
+    <span className="flex items-center gap-1"><Trash2 size={14} className="animate-spin"/> Deleting...</span>
+  ) : (
+    <><Trash2 size={14}/> Delete</>
+  )}
+</button>
+
                     </div>
                   </li>
                 ))}
