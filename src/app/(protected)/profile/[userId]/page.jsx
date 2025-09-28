@@ -3,46 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import PageLoader from "@/components/helper/PageLoader";
-
-// Icon components for a nice touch (you can use an icon library like react-icons)
-const ProductIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={2}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-    />
-  </svg>
-);
-
-const NotFoundIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-16 w-16 mx-auto text-red-400"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={2}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
-);
-
+import { Mail, Phone, University, Calendar, Package, AlertTriangle } from "lucide-react";
 
 export default function UserPage() {
-  const { userId } = useParams(); // get userId from route
+  const { userId } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,114 +34,135 @@ export default function UserPage() {
 
   if (loading) {
     return (
-      <div className="w-screen h-screen flex flex-col justify-center items-center">
+      <div className="w-screen h-screen flex flex-col justify-center items-center bg-slate-50">
         <PageLoader />
-        <h1 className="mt-6 text-xl font-semibold text-gray-400 animate-pulse">
+        <h1 className="mt-6 text-xl font-semibold text-slate-500 animate-pulse">
           Fetching Profile...
         </h1>
       </div>
     );
   }
 
-  if (!data) {
+  if (!data || !data.user) {
     return (
-      <div className="w-screen h-screen flex flex-col justify-center items-center p-6 text-center">
-        <NotFoundIcon />
-        <h2 className="mt-4 text-2xl font-bold text-red-500">User Not Found</h2>
-        <p className="text-gray-400 mt-2">
-          The profile you are looking for does not exist.
+      <div className="w-screen h-screen flex flex-col justify-center items-center p-6 text-center bg-slate-50">
+        <AlertTriangle size={48} className="text-red-500" />
+        <h2 className="mt-4 text-3xl font-bold text-slate-800">User Not Found</h2>
+        <p className="text-slate-500 mt-2">
+          The profile you are looking for does not exist or could not be loaded.
         </p>
+         <Link href="/browse">
+           <button className="mt-6 bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+             Back to Browse
+           </button>
+        </Link>
       </div>
     );
   }
 
   const { user, products } = data;
-  const userInitials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`;
 
   return (
-    <div className="min-h-screen mt-16 bg-gray-50 text-gray-900">
-  <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-    {/* User Card */}
-    <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 shadow-xl rounded-3xl p-8 mb-10 border border-gray-200">
-      <div className="flex flex-col sm:flex-row items-center space-y-6 sm:space-y-0 sm:space-x-8">
-        <div className="w-32 h-32 rounded-full flex-shrink-0 bg-blue-500 text-white flex items-center justify-center text-5xl font-bold border-4 border-white shadow-md">
-          {userInitials}
-        </div>
-        <div className="text-center sm:text-left">
-          <h1 className="text-4xl font-bold text-gray-900">
-            {user.firstName} {user.lastName}
-          </h1>
-          <p className="text-blue-600 text-lg mt-1">
-            Joined on {new Date(user.createdAt).toLocaleDateString()}
-          </p>
-        </div>
-      </div>
-      <div className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-        <div>
-          <label className="text-sm text-blue-600">Email</label>
-          <p className="text-lg font-semibold">
-            {user.primaryEmailAddress?.emailAddress ||
-              user.emailAddresses?.[0]?.emailAddress}
-          </p>
-        </div>
-        <div>
-          <label className="text-sm text-blue-600">Phone</label>
-          <p className="text-lg font-semibold">
-            {user.primaryPhoneNumber?.phoneNumber || "Not set"}
-          </p>
-        </div>
-        <div>
-          <label className="text-sm text-blue-600">College</label>
-          <p className="text-lg font-semibold">
-            {user.publicMetadata?.college || "Not set"}
-          </p>
-        </div>
+    <div className="min-h-screen mt-16 bg-slate-50 font-sans">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+        {/* User Profile Header */}
+        <header className="bg-white shadow-lg rounded-2xl border border-slate-200 p-6 sm:p-8 mb-8">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <Image
+              src={user.imageUrl}
+              alt={`${user.firstName}'s profile picture`}
+              width={100}
+              height={100}
+              className="rounded-full border-4 border-white shadow-md"
+            />
+            <div className="text-center sm:text-left">
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-800">
+                {user.firstName} {user.lastName}
+              </h1>
+              <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-x-6 gap-y-2 mt-2 text-slate-500">
+                <p className="flex items-center gap-2">
+                  <Calendar size={16} />
+                  Joined on {new Date(user.createdAt).toLocaleDateString("en-US", { year: 'numeric', month: 'long' })}
+                </p>
+                {user.publicMetadata?.college && (
+                  <p className="flex items-center gap-2">
+                    <University size={16} />
+                    {user.publicMetadata.college}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 pt-6 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                <Mail size={18} className="text-indigo-500 flex-shrink-0" />
+                <span className="text-slate-700 truncate">{user.primaryEmailAddress?.emailAddress || user.emailAddresses?.[0]?.emailAddress}</span>
+             </div>
+             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                <Phone size={18} className="text-indigo-500 flex-shrink-0" />
+                <span className="text-slate-700">{user.publicMetadata?.number || "Not provided"}</span>
+             </div>
+          </div>
+        </header>
+
+        {/* User's Products Section */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <Package size={24} className="text-slate-700" />
+            <h2 className="text-2xl font-bold text-slate-800">
+              {user.firstName}'s Listings
+            </h2>
+          </div>
+          {products.length === 0 ? (
+            <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
+              <p className="text-slate-500">This user has no listings.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((p) => {
+                // Define the card content once to avoid repetition
+                const cardContent = (
+                  <div className={`bg-white border border-slate-200 rounded-xl h-full overflow-hidden shadow-sm transition-all duration-300 ${p.isActive ? 'group-hover:shadow-xl group-hover:-translate-y-1' : ''} ${!p.isActive ? 'opacity-60' : ''}`}>
+                    <div className="relative w-full aspect-video">
+                        <Image src={p.images?.[0] || '/default_items.webp'} alt={p.title} fill className="object-cover" />
+                        <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold text-white shadow-md ${p.isActive ? 'bg-green-500' : 'bg-slate-500'}`}>
+                            {p.isActive ? 'Active' : 'Inactive'}
+                        </div>
+                    </div>
+                    <div className="p-4">
+                        <h3 className={`font-bold text-lg text-slate-800 ${p.isActive ? 'group-hover:text-indigo-600' : ''} transition-colors line-clamp-2`}>
+                          {p.title}
+                        </h3>
+                        <p className="text-indigo-600 mt-2 font-semibold text-xl">
+                          ₹{p.price.toLocaleString()}
+                        </p>
+                        <div className="mt-4 pt-4 border-t border-slate-200 text-xs text-slate-400 flex justify-between items-center">
+                          <span>
+                            Listed: {new Date(p.createdAt).toLocaleDateString()}
+                          </span>
+                           <span className={`flex items-center gap-1 font-semibold ${p.isActive ? 'text-indigo-500 group-hover:text-indigo-700' : 'text-slate-400'} transition-colors`}>
+                             View Details {p.isActive && '→'}
+                           </span>
+                        </div>
+                    </div>
+                  </div>
+                );
+
+                // --- ✅ Conditionally wrap the card ---
+                return p.isActive ? (
+                  <Link href={`/product/${p._id}`} key={p._id} className="group block">
+                    {cardContent}
+                  </Link>
+                ) : (
+                  <div key={p._id} className="group block cursor-not-allowed">
+                    {cardContent}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
     </div>
-
-    {/* Products Section */}
-    <section>
-      <h2 className="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-200">
-        Products for Sale
-      </h2>
-      {products.length === 0 ? (
-        <div className="text-center py-12 bg-white border border-gray-200 rounded-2xl shadow-sm">
-          <p className="text-gray-500">This user has no active listings.</p>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-6">
-          {products.map((p) => (
-            <Link
-              href={`/product/${p._id}`}
-              key={p._id}
-              className="group block"
-            >
-              <div className="bg-white border border-gray-200 p-6 rounded-2xl h-full shadow-sm transition-all duration-300 hover:border-purple-700 hover:shadow-lg hover:-translate-y-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-500 transition-colors">
-                    {p.title}
-                  </h3>
-                  <ProductIcon className="text-gray-500 group-hover:text-blue-500" />
-                </div>
-                <p className="text-blue-600 mt-2 font-mono text-lg">
-                  ₹{p.price}
-                </p>
-                <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-500 flex justify-between items-center">
-                  <span>
-                    Listed: {new Date(p.createdAt).toLocaleDateString()}
-                  </span>
-                  <span className="flex items-center gap-2 transition-transform duration-300 group-hover:translate-x-1 text-blue-600">
-                    View Product →
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </section>
-  </div>
-</div>
-
   );
 }

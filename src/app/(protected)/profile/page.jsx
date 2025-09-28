@@ -4,8 +4,10 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import Image from "next/image";
 import PageLoader from "@/components/helper/PageLoader";
 import toast, { Toaster } from "react-hot-toast";
+import { User, Mail, Phone, University, Calendar, Edit, Save, X, Power, PowerOff, Shield, Trash2, UserCog } from "lucide-react";
 
 export default function MyProfilePage() {
   const { user, isLoaded } = useUser();
@@ -23,30 +25,27 @@ export default function MyProfilePage() {
   });
   const [productsByUser, setProductsByUser] = useState([]);
 
-  // ✅ Load user & products
+  // Load user & products
   useEffect(() => {
     const load = async () => {
       try {
         const res = await fetch("/api/users");
         if (!res.ok) throw new Error("Failed to load profile");
-
         const json = await res.json();
-
         setProfile(json.currentUser || null);
         setProductsByUser(json.products || []);
-
         if (json.isAdmin) {
           setUsersList(json.users.data || []);
         }
       } catch (err) {
         console.error("Profile load error:", err);
-        toast.error("Failed to load profile ❌");
+        toast.error("Failed to load profile.");
       }
     };
     load();
   }, []);
 
-  // ✅ Sync form with profile
+  // Sync form with profile
   useEffect(() => {
     if (profile) {
       setForm({
@@ -59,7 +58,7 @@ export default function MyProfilePage() {
           "",
         number: profile.publicMetadata?.number || "",
         memberSince: profile.createdAt
-          ? new Date(profile.createdAt).toLocaleDateString()
+          ? new Date(profile.createdAt).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })
           : "",
       });
     }
@@ -68,10 +67,9 @@ export default function MyProfilePage() {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // ✅ Save profile changes
+  // Save profile changes
   const save = async () => {
     if (!profile) return;
-
     setSaving(true);
     try {
       const res = await fetch("/api/users", {
@@ -90,283 +88,216 @@ export default function MyProfilePage() {
           },
         }),
       });
-
       if (!res.ok) throw new Error("Failed to update profile");
-
-      setProfile((prev) => ({
-        ...prev,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        publicMetadata: {
-          ...prev.publicMetadata,
-          college: form.college,
-          number: form.number,
-        },
-      }));
-
+      const updatedProfile = await res.json();
+      setProfile(updatedProfile.user);
       setEditing(false);
-      toast.success("Profile updated successfully ✅");
+      toast.success("Profile updated successfully!");
     } catch (err) {
       console.error("Save error:", err);
-      toast.error("Something went wrong while updating profile ❌");
+      toast.error("Something went wrong while updating.");
     } finally {
       setSaving(false);
     }
   };
 
- const toggleProduct = async (e, productId) => {
-  e.stopPropagation();
-  try {
-    const res = await fetch(`/api/product/${productId}`, {
-      method: "PATCH",
-    });
+  const toggleProduct = async (productId) => {
+    try {
+        const productToUpdate = productsByUser.find(p => p._id === productId);
+        if (!productToUpdate) return;
+        const res = await fetch(`/api/product/${productId}`, { method: "PATCH" });
+        if (!res.ok) throw new Error("Failed to toggle product");
+        const { updatedProduct } = await res.json();
+        setProductsByUser((prev) =>
+            prev.map((p) => (p._id === productId ? updatedProduct : p))
+        );
+        toast.success(
+            updatedProduct.isActive ? "Product activated." : "Product deactivated."
+        );
+    } catch (err) {
+        console.error("Error toggling product:", err);
+        toast.error("Failed to update product.");
+    }
+  };
 
-    if (!res.ok) throw new Error("Failed to toggle product");
+  // ✅ --- NEW: Delete Product Functionality ---
+  const deleteProduct = async (productId) => {
+    // Confirm before deleting
+    if (!window.confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) {
+      return;
+    }
+    
+    try {
+        const res = await fetch(`/api/product/${productId}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || "Failed to delete product");
+        }
 
-    const {updatedProduct} = await res.json();
-
-    // ✅ Update the local state to reflect changes instantly
-    setProductsByUser((prev) =>
-      prev.map((p) => (p._id === productId ? { ...p, isActive: !p.isActive } : p))
-    );
-
-    toast.success(
-      updatedProduct.isActive ? "Product activated ✅" : "Product deactivated ❌"
-    );
-  } catch (err) {
-    console.error("Error toggling product:", err);
-    toast.error("Failed to update product ❌");
-  }
-};
-
-
+        // Update UI instantly by removing the product from state
+        setProductsByUser(prev => prev.filter(p => p._id !== productId));
+        toast.success("Product deleted successfully.");
+    } catch (err) {
+        console.error("Error deleting product:", err);
+        toast.error(err.message || "Failed to delete product.");
+    }
+  };
 
   const makeAdmin = async (targetId) => {
     const res = await fetch(`/api/users/${targetId}/make-admin`, {
       method: "POST",
     });
     if (res.ok) {
-      toast.success("User promoted to admin");
-      location.reload();
+      toast.success("User promoted to admin.");
+      setUsersList(prev => prev.map(u => u.id === targetId ? { ...u, publicMetadata: { ...u.publicMetadata, role: 'admin' } } : u));
     } else {
-      toast.error("Failed to promote user ❌");
+      toast.error("Failed to promote user.");
     }
   };
-
-  if (!isLoaded || !profile)
+  
+  if (!isLoaded || !profile) {
     return (
-      <div className="w-screen h-screen flex flex-col gap-4 justify-center items-center">
+      <div className="w-screen h-screen flex flex-col gap-4 justify-center items-center bg-slate-50">
         <PageLoader />
-        <h1 className="mt-6 text-xl font-semibold text-gray-500 animate-pulse">
-          Please wait, this might take some time...
+        <h1 className="mt-6 text-xl font-semibold text-gray-500">
+          Loading your profile...
         </h1>
       </div>
     );
-
-  const products = productsByUser || [];
+  }
 
   return (
-    <div className="min-h-screen mt-16 bg-gray-50 p-6 md:p-12">
-      {/* Profile Card */}
-      <div className="max-w-4xl mx-auto bg-gradient-to-r from-orange-100 to-yellow-100 shadow-2xl rounded-3xl p-8 mb-8">
-        {!editing ? (
-          <div>
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h1 className="text-4xl font-extrabold text-purple-900 mb-1">
-                  {form.firstName} {form.lastName}
-                </h1>
-                <p className="text-purple-700 font-medium tracking-wide">
-                  Profile Details
-                </p>
+    <div className="min-h-screen mt-16 bg-slate-50 p-4 sm:p-6 md:p-8">
+      <Toaster position="top-right" />
+      <div className="max-w-5xl mx-auto space-y-8">
+        
+        {/* Profile Card */}
+        <section className="bg-white shadow-lg rounded-2xl border border-slate-200">
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
+              <div className="flex items-center gap-4">
+                <Image src={profile.imageUrl} alt="Profile" width={80} height={80} className="rounded-full" />
+                <div>
+                  <h1 className="text-3xl font-bold text-slate-800">
+                    {form.firstName} {form.lastName}
+                  </h1>
+                  <p className="text-slate-500">Your personal dashboard</p>
+                </div>
               </div>
               <button
-                onClick={() => setEditing(true)}
-                className="bg-white/25 hover:bg-yellow-200 hover:scale-105 backdrop-blur-md text-orange-500 font-semibold px-5 py-2 rounded-xl shadow-md transition"
+                onClick={() => setEditing(!editing)}
+                className="mt-4 sm:mt-0 flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-lg transition-colors duration-300"
               >
-                Edit Profile
+                {editing ? <><X size={16}/> Cancel</> : <><Edit size={16}/> Edit Profile</>}
               </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-purple-900">
-              <div>
-                <label className="text-sm text-purple-600 font-medium">
-                  Email
-                </label>
-                <p className="text-lg font-semibold">{form.email}</p>
+            
+            {!editing ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="flex items-center gap-3"><Mail size={20} className="text-indigo-500" /><span className="text-slate-700">{form.email}</span></div>
+                <div className="flex items-center gap-3"><Phone size={20} className="text-indigo-500" /><span className="text-slate-700">{form.number || "Not set"}</span></div>
+                <div className="flex items-center gap-3"><University size={20} className="text-indigo-500" /><span className="text-slate-700">{form.college || "Not set"}</span></div>
+                <div className="flex items-center gap-3"><Calendar size={20} className="text-indigo-500" /><span className="text-slate-700">Member since {form.memberSince}</span></div>
               </div>
-              <div>
-                <label className="text-sm text-purple-600 font-medium">
-                  Phone
-                </label>
-                <p className="text-lg font-semibold">
-                  {form.number || "Not set"}
-                </p>
+            ) : (
+              <div className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input name="college" value={form.college} onChange={handleChange} placeholder="College" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input name="number" value={form.number} onChange={handleChange} placeholder="Phone Number" className="w-full bg-slate-100 border-slate-200 border-2 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                 </div>
+                 <div className="flex gap-4">
+                    <button onClick={save} disabled={saving} className="flex items-center gap-2 px-6 py-2 rounded-lg font-semibold transition text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400">
+                        <Save size={16}/> {saving ? "Saving..." : "Save Changes"}
+                    </button>
+                 </div>
               </div>
-              <div>
-                <label className="text-sm text-purple-600 font-medium">
-                  College
-                </label>
-                <p className="text-lg font-semibold">
-                  {form.college || "Not set"}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm text-purple-600 font-medium">
-                  Member Since
-                </label>
-                <p className="text-lg font-semibold">{form.memberSince}</p>
-              </div>
-            </div>
+            )}
           </div>
-        ) : (
-          // EDIT MODE
-          <div>
-            <h1 className="text-3xl font-extrabold mb-6 text-purple-900">
-              Edit Your Profile
-            </h1>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input
-                  name="firstName"
-                  value={form.firstName}
-                  onChange={handleChange}
-                  placeholder="First Name"
-                  className="w-full bg-white/10 text-purple-900 border-b-2 border-purple-300 focus:border-purple-600 p-2 rounded transition placeholder:text-purple-400 outline-none"
-                />
-                <input
-                  name="lastName"
-                  value={form.lastName}
-                  onChange={handleChange}
-                  placeholder="Last Name"
-                  className="w-full bg-white/10 text-purple-900 border-b-2 border-purple-300 focus:border-purple-600 p-2 rounded transition placeholder:text-purple-400 outline-none"
-                />
-                <input
-                  name="college"
-                  value={form.college}
-                  onChange={handleChange}
-                  placeholder="College"
-                  className="w-full bg-white/10 text-purple-900 border-b-2 border-purple-300 focus:border-purple-600 p-2 rounded transition placeholder:text-purple-400 outline-none"
-                />
-                <input
-                  name="number"
-                  value={form.number}
-                  onChange={handleChange}
-                  placeholder="Phone Number"
-                  className="w-full bg-white/10 text-purple-900 border-b-2 border-purple-300 focus:border-purple-600 p-2 rounded transition placeholder:text-purple-400 outline-none"
-                />
-              </div>
+        </section>
 
-              {/* Read-only fields with subtle glass effect */}
-              <input
-                name="email"
-                value={`Email: ${form.email}`}
-                readOnly
-                className="w-full bg-white/20 text-purple-900 p-3 rounded-lg backdrop-blur-sm cursor-not-allowed"
-              />
-              <input
-                name="memberSince"
-                value={`Member Since: ${form.memberSince}`}
-                readOnly
-                className="w-full bg-white/20 text-purple-900 p-3 rounded-lg backdrop-blur-sm cursor-not-allowed"
-              />
-
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={save}
-                  disabled={saving}
-                  className={`px-6 py-2 rounded-xl shadow-lg font-semibold transition text-white ${
-                    saving
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-purple-700 hover:bg-purple-800"
-                  }`}
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="bg-white/25 hover:bg-white/40 backdrop-blur-md text-purple-900 font-semibold px-6 py-2 rounded-xl transition"
-                >
-                  Cancel
-                </button>
+        {/* My Products Section */}
+        <section>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">My Products</h2>
+          <div className="bg-white shadow-lg rounded-2xl border border-slate-200 overflow-hidden">
+            {productsByUser.length > 0 ? (
+              <ul className="divide-y divide-slate-200">
+                {productsByUser.map((p) => (
+                  <li key={p._id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
+                    <Link href={`/product/${p._id}`} className="flex items-center gap-4 group">
+                      <Image src={p.images?.[0] || '/default_items.webp'} alt={p.title} width={64} height={64} className="rounded-lg aspect-square object-cover" />
+                      <div>
+                        <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{p.title}</h3>
+                        <p className="text-slate-500 text-sm">₹{p.price.toLocaleString()} - <span className={p.isActive ? 'text-green-600' : 'text-red-600'}>{p.isActive ? 'Active' : 'Inactive'}</span></p>
+                      </div>
+                    </Link>
+                    <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+                       <button onClick={() => toggleProduct(p._id)} className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-colors ${p.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-green-100 text-green-800 hover:bg-green-200"}`}>
+                         {p.isActive ? <><PowerOff size={14}/>Deactivate</> : <><Power size={14}/>Activate</>}
+                       </button>
+                       {/* ✅ --- NEW: Delete Button --- */}
+                       <button onClick={() => deleteProduct(p._id)} className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors">
+                         <Trash2 size={14}/> Delete
+                       </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-center p-12">
+                <p className="text-slate-500">You haven't listed any products yet.</p>
+                <Link href="/create">
+                   <button className="mt-4 bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition-colors">List an Item</button>
+                </Link>
               </div>
-            </div>
+            )}
           </div>
+        </section>
+
+        {/* Admin Users Section */}
+        {profile.publicMetadata?.role === 'admin' && usersList.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">All Users (Admin Panel)</h2>
+            <div className="bg-white shadow-lg rounded-2xl border border-slate-200 overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 border-b border-slate-200 text-sm text-slate-600">
+                  <tr>
+                    <th className="p-4 font-semibold">User</th>
+                    <th className="p-4 font-semibold">Email</th>
+                    <th className="p-4 font-semibold">Role</th>
+                    <th className="p-4 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {usersList.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-4 flex items-center gap-3">
+                         <Image src={u.imageUrl} alt="" width={40} height={40} className="rounded-full" />
+                         <span className="font-medium text-slate-900">{u.firstName} {u.lastName}</span>
+                      </td>
+                      <td className="p-4 text-slate-600">{u.emailAddresses[0]?.emailAddress}</td>
+                      <td className="p-4">
+                        {u.publicMetadata?.role === 'admin' ? 
+                          <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Admin</span> : 
+                          <span className="px-2 py-1 text-xs font-semibold text-slate-700 bg-slate-100 rounded-full">User</span>
+                        }
+                      </td>
+                      <td className="p-4 text-right">
+                        {u.publicMetadata?.role !== 'admin' && (
+                           <button onClick={() => makeAdmin(u.id)} className="flex items-center gap-1.5 ml-auto bg-yellow-100 text-yellow-800 hover:bg-yellow-200 font-semibold px-3 py-1.5 rounded-md text-sm transition-colors">
+                            <UserCog size={14}/> Make Admin
+                           </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         )}
       </div>
-
-      {/* Products Section */}
-      <section className="max-w-4xl mx-auto mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">My Products</h2>
-        {products.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <p className="text-gray-600">
-              You haven't listed any products yet.
-            </p>
-          </div>
-        ) : (
-          // The grid now has a smaller gap for a tighter, cleaner look.
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {products.map((p) => (
-              // Each card is now a flex container for a horizontal layout.
-              // Subtle border and shadow for a modern, clean aesthetic.
-              <div
-                key={p._id}
-                className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 flex items-center justify-between"
-              >
-                {/* Div for Title and Price */}
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">{p.title}</h3>
-                  <p className="text-gray-500 text-sm">₹{p.price}</p>
-                </div>
-
-                {/* Modern "Pill" style button */}
-                <button
-  onClick={(e) => toggleProduct(e, p._id)}
-  className={`text-sm font-semibold px-4 py-1.5 rounded-full transition-colors duration-200 ${
-    p.isActive
-      ? "bg-red-100 text-red-700 hover:bg-red-200"
-      : "bg-green-100 text-green-700 hover:bg-green-200"
-  }`}
->
-  {p.isActive ? "Deactivate" : "Activate"}
-</button>
-
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Admin Users Section */}
-      {usersList.length > 0 && (
-  <section className="max-w-4xl mx-auto">
-    <h2 className="text-2xl font-bold text-gray-800 mb-4">
-      All Users (Admin)
-    </h2>
-    <div className="grid md:grid-cols-2 gap-4">
-      {usersList.map((u) => (
-        <div
-          key={u.id}
-          onClick={() => window.location.href = `/profile/${u.id}`}
-          className="bg-white p-4 rounded-2xl shadow-md flex justify-between items-center hover:shadow-xl transition cursor-pointer hover:bg-gray-50"
-        >
-          <span className="text-gray-800 font-medium">{u.firstName} {u.lastName}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent navigating when clicking the button
-              makeAdmin(u.id);
-            }}
-            className="bg-yellow-500 hover:bg-yellow-600 transition text-white px-3 py-1 rounded-xl shadow-sm"
-          >
-            Make Admin
-          </button>
-        </div>
-      ))}
-    </div>
-  </section>
-)}
-
     </div>
   );
 }
