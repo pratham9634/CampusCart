@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
-// Utility: format "time ago"
+// Utility: format "time ago" (code is unchanged)
 const timeAgo = (date) => {
   const now = new Date();
   const posted = new Date(date);
@@ -23,6 +24,8 @@ const timeAgo = (date) => {
   }
   return "Just now";
 };
+
+// Dummy products data (code is unchanged)
 const dummyProducts = [
   {
     _id: "1",
@@ -31,7 +34,7 @@ const dummyProducts = [
     price: 35000,
     category: "Electronics",
     image: "https://images.unsplash.com/photo-1622286346003-c5c7e63b1088?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGRlbGwlMjBsYXB0b3B8ZW58MHx8MHx8fDA%3D",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
   },
   {
     _id: "2",
@@ -40,8 +43,9 @@ const dummyProducts = [
     price: 5000,
     category: "Musical Instruments",
     image: "https://images.unsplash.com/photo-1516924962500-2b4b3b99ea02?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Z3VpdGFyfGVufDB8fDB8fHww",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
   },
+ 
   {
     _id: "3",
     title: "Casio Scientific Calculator",
@@ -67,52 +71,88 @@ const dummyProducts = [
     price: 900,
     category: "Furniture",
     image: "https://plus.unsplash.com/premium_photo-1675186049302-a0dad4cf3412?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8Y2hhaXIlMjB3b29kfGVufDB8fDB8fHww",
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 mins ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
   },
 ];
 
-const Featured = ({ products= dummyProducts}) => {
+// Animation variants (code is unchanged)
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+    },
+  },
+};
+
+const Featured = ({ products = dummyProducts }) => {
   const featured = products?.slice(0, 5) || [];
 
   return (
     <section className="w-full py-12 px-8 bg-gray-200">
       {/* Heading */}
-      <h2 className="text-xl md:text-2xl font-extrabold text-center">
+      <motion.h2
+        initial={{ y: -30, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }} // Changed 'animate' to 'whileInView'
+        viewport={{ once: false, amount: 0.5 }} // Added viewport settings
+        transition={{ duration: 0.5 }}
+        className="text-xl md:text-2xl font-extrabold text-center"
+      >
         <span className="bg-gradient-to-r from-orange-500 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-text">
           Featured Products
         </span>
         <div className="w-40 h-1 bg-gradient-to-r from-orange-500 via-blue-500 to-purple-600 mx-auto mt-2 rounded-full animate-pulse" />
-      </h2>
+      </motion.h2>
 
-      {/* Cards */}
-      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 ">
+      {/* Cards Grid */}
+      <motion.div
+        className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6"
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible" // Changed 'animate' to 'whileInView'
+        viewport={{ once: false, amount: 0.2 }} // Added viewport settings
+      >
         {featured.map((product) => (
-          <div
+          <motion.div
             key={product._id}
-             className="rounded-3xl backdrop-blur-md shadow-lg border border-white/30 
+            variants={itemVariants}
+            whileHover={{ scale: 1.03, y: -5 }}
+            whileTap={{ scale: 0.98 }}
+            className="rounded-3xl backdrop-blur-md shadow-lg border border-white/30 
              overflow-hidden flex flex-col justify-between 
              bg-gradient-to-br from-amber-100 via-blue-100 to-purple-100
-             transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+             hover:shadow-2xl"
           >
-            {/* Product Image */}
-            <div className="relative w-full h-30">
+            {/* ... rest of the card content is unchanged ... */}
+            <div className="relative w-full h-40">
               <Image
                 src={product.image || "/default_items.webp"}
                 alt={product.title}
                 fill
-                className="object-cover rounded-t-3xl"
+                className="object-cover"
               />
             </div>
-
-            {/* Info */}
             <div className="p-4 flex flex-col flex-grow">
               <h3 className="font-bold text-md text-gray-900 truncate">
                 {product.title}
               </h3>
-              <p className="text-sm text-gray-700  line-clamp-2">
+              <p className="text-sm text-gray-700 mt-1 line-clamp-2">
                 {product.description}
               </p>
-              <p className=" text-orange-500 font-semibold">
+              <p className="mt-2 text-orange-500 font-semibold">
                 ₹{product.price}
               </p>
               <p className="mt-1 text-xs text-blue-600 font-medium">
@@ -122,8 +162,6 @@ const Featured = ({ products= dummyProducts}) => {
                 Posted {timeAgo(product.createdAt)}
               </p>
             </div>
-
-            {/* Button */}
             <div className="p-4 pt-0">
               <Link
                 href={`/product/${product._id}`}
@@ -132,9 +170,9 @@ const Featured = ({ products= dummyProducts}) => {
                 View Product
               </Link>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 };

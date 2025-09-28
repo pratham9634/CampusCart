@@ -1,6 +1,30 @@
-"use client"
+"use client";
 import { categoriesData } from "@/constants/categories";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion"; // Import motion
+
+// Define animation variants for the grid container and each item
+const gridContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1, // Animate children with a 0.1s delay between them
+    },
+  },
+};
+
+const gridItemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 120,
+    },
+  },
+};
 
 const Category = () => {
   const router = useRouter();
@@ -11,20 +35,36 @@ const Category = () => {
 
   return (
     <section className="w-full px-6 py-24 bg-gray-50 text-center">
-      <h1 className="text-xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-purple-600 to-red-500 mb-16">
+      <motion.h1
+        initial={{ y: -30, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: false, amount: 0.5 }}
+        transition={{ duration: 0.5 }}
+        className="text-xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-purple-600 to-red-500 mb-16"
+      >
         Explore Categories
         <span className="block w-32 h-1 mx-auto mt-4 bg-gradient-to-r from-orange-500 via-purple-600 to-red-500 rounded-full animate-pulse"></span>
-      </h1>
+      </motion.h1>
 
-      <div className="grid grid-cols-3 md:grid-cols-5 gap-8 max-w-8xl mx-auto">
+      <motion.div
+        className="grid grid-cols-3 md:grid-cols-5 gap-8 max-w-8xl mx-auto"
+        variants={gridContainerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.1 }} // Trigger animation every time 10% of it is in view
+      >
         {categoriesData.map((category) => {
           const Icon = category.icon;
 
           return (
-            <div
+            <motion.div
               key={category.id}
               onClick={() => handleClick(category.title)}
-              className="bg-white p-2 rounded-2xl shadow-lg transition-all duration-500 cursor-pointer group transform hover:-translate-y-3 hover:shadow-2xl animate-float"
+              className="bg-white p-2 rounded-2xl shadow-lg cursor-pointer group"
+              variants={gridItemVariants}
+              whileHover={{ y: -12, scale: 1.05, boxShadow: "0px 15px 25px -5px rgba(0, 0, 0, 0.1)" }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
               {/* Icon */}
               <div
@@ -39,10 +79,10 @@ const Category = () => {
               >
                 {category.title}
               </h2>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </section>
   );
 };
