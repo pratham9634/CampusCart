@@ -1,5 +1,6 @@
 "use client"
 import { categoriesData } from "@/constants/categories";
+import { useRouter } from "next/navigation";
 
 const Category = () => {
   const router = useRouter();
