@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { io } from "socket.io-client";
 import { getUserById } from "@/lib/clerk";
 import Loader from "./Loader";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Tag, ShieldCheck, Hammer, Phone, University, User, Mail, CalendarDays, Clock } from "lucide-react";
-import { io } from "socket.io-client";
 
 let socket;
 
@@ -19,50 +19,51 @@ const ProductDetails = ({ product, currentUser }) => {
   const [bids, setBids] = useState([]);
   const [bidAmount, setBidAmount] = useState("");
   const [showBidsModal, setShowBidsModal] = useState(false);
-  
-  // --- ✅ NEW: State for the countdown timer ---
+
+  // Countdown timer
   const [timeLeft, setTimeLeft] = useState("");
   const [isAuctionEnded, setIsAuctionEnded] = useState(false);
 
-  // --- ✅ NEW: useEffect for the countdown timer ---
-useEffect(() => {
-  if (product.type !== "auction" || !product.auctionEndDate) return;
+  // Contact seller modal
+  const [showContactModal, setShowContactModal] = useState(false);
 
-  const calculateTimeLeft = () => {
-    const difference = new Date(product.auctionEndDate) - new Date();
-    if (difference > 0) {
-      setIsAuctionEnded(false);
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      };
-    } else {
-      setIsAuctionEnded(true);
-      return null;
-    }
-  };
-
-  const updateTime = () => {
-    const newTime = calculateTimeLeft();
-    if (newTime) {
-      setTimeLeft(`${newTime.days}d ${newTime.hours}h ${newTime.minutes}m ${newTime.seconds}s`);
-    } else {
-      setTimeLeft("Auction Ended");
-    }
-  };
-
-  updateTime(); // Update immediately on mount
-  const timer = setInterval(updateTime, 1000);
-
-  return () => clearInterval(timer);
-}, [product.auctionEndDate, product.type]);
-
-
-  // Initialize Socket.IO and join product room
+  // --- Countdown Timer ---
   useEffect(() => {
-    if (!socket) socket = io("http://localhost:5000"); // Your server URL
+    if (product.type !== "auction" || !product.auctionEndDate) return;
+
+    const calculateTimeLeft = () => {
+      const difference = new Date(product.auctionEndDate) - new Date();
+      if (difference > 0) {
+        setIsAuctionEnded(false);
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        };
+      } else {
+        setIsAuctionEnded(true);
+        return null;
+      }
+    };
+
+    const updateTime = () => {
+      const newTime = calculateTimeLeft();
+      if (newTime) {
+        setTimeLeft(`${newTime.days}d ${newTime.hours}h ${newTime.minutes}m ${newTime.seconds}s`);
+      } else {
+        setTimeLeft("Auction Ended");
+      }
+    };
+
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, [product.auctionEndDate, product.type]);
+
+  // Socket.IO
+  useEffect(() => {
+    if (!socket) socket = io("http://localhost:5000");
     socket.emit("joinProductRoom", product._id);
 
     socket.on("newBid", (data) => {
@@ -80,7 +81,7 @@ useEffect(() => {
     };
   }, [product._id]);
 
-  // Fetch all bids from API on mount
+  // Fetch bids
   useEffect(() => {
     const fetchBids = async () => {
       try {
@@ -89,30 +90,24 @@ useEffect(() => {
         const data = await res.json();
         setBids(data.sort((a, b) => b.amount - a.amount));
         if (data.length > 0) {
-           const maxBid = data.reduce((prev, current) => (prev.amount > current.amount) ? prev : current);
-           setHighestBid(maxBid);
+          const maxBid = data.reduce((prev, current) => (prev.amount > current.amount ? prev : current));
+          setHighestBid(maxBid);
         }
       } catch (err) {
         console.error(err);
       }
     };
-    if (product?._id) {
-      fetchBids();
-    }
+    if (product?._id) fetchBids();
   }, [product._id]);
 
-
-  // Build media array
+  // Media
   useEffect(() => {
-    const mediaArray = (product.images || []).map((img) => ({
-      src: img,
-      isImage: true,
-    }));
+    const mediaArray = (product.images || []).map((img) => ({ src: img, isImage: true }));
     if (product.video) mediaArray.push({ src: product.video, isImage: false });
     setMedia(mediaArray);
   }, [product.images, product.video]);
 
-  // Fetch seller info
+  // Seller
   useEffect(() => {
     if (!product.createdBy) return;
     const fetchSeller = async () => {
@@ -129,15 +124,13 @@ useEffect(() => {
   const handlePrev = () => setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
   const handleNext = () => setCurrentIndex((prev) => (prev === media.length - 1 ? 0 : prev + 1));
   const handleNavigate = () => router.push(`/profile/${product.createdBy}`);
-
   const displayPrice = product.type === "auction" && highestBid?.amount > 0 ? highestBid.amount : product.price;
 
   const handleBid = () => {
     if (!currentUser) return alert("Please login to place a bid");
     const amount = parseInt(bidAmount);
-    if (!amount || amount <= (highestBid?.amount || product.price || 0)) {
+    if (!amount || amount <= (highestBid?.amount || product.price || 0))
       return alert("Bid must be higher than the current highest bid or starting price.");
-    }
     socket.emit("placeBid", {
       productId: product._id,
       bidderId: currentUser.id,
@@ -151,8 +144,8 @@ useEffect(() => {
     <section className="w-full min-h-screen p-4 md:p-8 bg-slate-50 font-sans">
       <div className="container mx-auto mt-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          
-          {/* Left Column: Media Gallery */}
+
+          {/* Left Column: Media */}
           <div className="flex flex-col items-center gap-4">
             <div className="w-full aspect-video relative rounded-2xl overflow-hidden shadow-lg group bg-slate-100">
               {media.length > 0 ? (
@@ -176,6 +169,7 @@ useEffect(() => {
                 </>
               )}
             </div>
+
             {media.length > 1 && (
               <div className="flex gap-3 justify-center flex-wrap">
                 {media.map((item, idx) => (
@@ -193,8 +187,9 @@ useEffect(() => {
             )}
           </div>
 
-          {/* Right Column: Product Info */}
+          {/* Right Column */}
           <div className="flex flex-col gap-5">
+
             {/* Title & Tags */}
             <div>
               <div className="flex items-center gap-3 flex-wrap mb-2">
@@ -204,19 +199,19 @@ useEffect(() => {
               </div>
               <h1 className="text-3xl lg:text-4xl font-bold text-slate-800 break-words">{product.title}</h1>
             </div>
-            
-            {/* --- ✅ NEW: Auction Countdown Timer UI --- */}
+
+            {/* Auction Timer */}
             {product.type === 'auction' && (
               <div className={`p-4 rounded-xl border ${isAuctionEnded ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
                 <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-1">
-                    <Clock size={16} />
-                    <span>{isAuctionEnded ? 'Auction Status' : 'Time Left'}</span>
+                  <Clock size={16} />
+                  <span>{isAuctionEnded ? 'Auction Status' : 'Time Left'}</span>
                 </div>
                 <p className={`text-2xl font-bold ${isAuctionEnded ? 'text-red-600' : 'text-amber-900'}`}>{timeLeft || "Loading..."}</p>
               </div>
             )}
 
-            {/* Price / Bidding */}
+            {/* Price */}
             <div className="p-4 bg-white rounded-xl border border-slate-200">
               <p className="text-sm text-slate-500">
                 {product.type === "auction" ? (highestBid?.amount > 0 ? "Current Bid" : "Starting Price") : "Price"}
@@ -226,35 +221,43 @@ useEffect(() => {
               </p>
             </div>
 
-            {/* Bidding & Action Buttons */}
+            {/* Bidding / Actions */}
             <div className="flex flex-col gap-3">
               {product.type === "auction" && (
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input 
-                    type="number" 
+                    type="number"
                     placeholder={isAuctionEnded ? "Auction has ended" : "Enter your bid amount"}
-                    className="flex-1 border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100" 
-                    value={bidAmount} 
-                    onChange={(e) => setBidAmount(e.target.value)} 
-                    disabled={isAuctionEnded} // ✅ Disable input when auction ends
+                    className="flex-1 border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    disabled={isAuctionEnded}
                   />
                   <button 
-                    onClick={handleBid} 
+                    onClick={handleBid}
                     className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    disabled={isAuctionEnded} // ✅ Disable button when auction ends
+                    disabled={isAuctionEnded}
                   >
                     Place Bid
                   </button>
                 </div>
               )}
-               <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
-                {product.type === "sale" && <button className="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-sm">Buy Now</button>}
-                <button className="flex-1 border border-slate-300 text-slate-700 font-semibold py-3 rounded-lg hover:bg-slate-100 transition-colors duration-300">Message Seller</button>
+
+              <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
+                {product.type === "sale" && <button 
+                onClick={() => setShowContactModal(true)}
+                className="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-sm">Buy Now</button>}
+                <button 
+                  onClick={() => setShowContactModal(true)}
+                  className="flex-1 border border-slate-300 text-slate-700 font-semibold py-3 rounded-lg hover:bg-slate-100 transition-colors duration-300"
+                >
+                  Contact Seller
+                </button>
                 {product.type === "auction" && <button onClick={() => setShowBidsModal(true)} className="flex-1 border border-slate-300 text-slate-700 font-semibold py-3 rounded-lg hover:bg-slate-100 transition-colors duration-300">View All Bids</button>}
               </div>
             </div>
 
-            {/* Description & Details */}
+            {/* Product Details */}
             <div>
               <h2 className="text-xl font-semibold text-slate-700 mb-2">Details</h2>
               <p className="text-slate-600 whitespace-pre-line leading-relaxed break-words">{product.description || "No description provided."}</p>
@@ -269,9 +272,9 @@ useEffect(() => {
               <h2 className="text-xl font-semibold text-slate-700 mb-3">Seller Information</h2>
               {!seller ? <Loader /> : (
                 <div className="flex flex-col gap-2 p-4 bg-white rounded-lg border border-slate-200">
-                    <button onClick={handleNavigate} className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:underline break-words text-left">
-                        <User size={20} className="flex-shrink-0"/> {seller?.name || "N/A"}
-                    </button>
+                  <button onClick={handleNavigate} className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:underline break-words text-left">
+                    <User size={20} className="flex-shrink-0"/> {seller?.name || "N/A"}
+                  </button>
                   <p className="flex items-center gap-2 text-sm text-slate-500 break-words"><Mail size={16} className="flex-shrink-0"/> {seller?.email || "N/A"}</p>
                   <p className="flex items-center gap-2 text-sm text-slate-500 break-words"><CalendarDays size={16} className="flex-shrink-0"/> Member since: {seller?.memberSince ? new Date(seller.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "N/A"}</p>
                 </div>
@@ -286,8 +289,8 @@ useEffect(() => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
           <div className="bg-white p-6 rounded-xl w-full max-w-md max-h-[80vh] flex flex-col relative shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-2xl font-bold text-slate-800">All Bids</h2>
-                 <button onClick={() => setShowBidsModal(false)} className="text-slate-500 hover:text-slate-800 transition-colors">✕</button>
+              <h2 className="text-2xl font-bold text-slate-800">All Bids</h2>
+              <button onClick={() => setShowBidsModal(false)} className="text-slate-500 hover:text-slate-800 transition-colors">✕</button>
             </div>
             <ul className="overflow-y-auto flex-1 pr-2">
               {bids.length === 0 ? (
@@ -301,6 +304,54 @@ useEffect(() => {
                 ))
               )}
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Seller Modal */}
+      {showContactModal && seller && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col gap-6 relative">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-slate-800">Contact Seller</h2>
+              <button 
+                onClick={() => setShowContactModal(false)} 
+                className="text-slate-500 hover:text-slate-800 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm">
+              <div className="flex items-center gap-3">
+                <User size={24} className="text-indigo-500 flex-shrink-0"/>
+                <div className="flex flex-col">
+                  <p className="font-semibold text-indigo-700 break-words">{seller.name || "N/A"}</p>
+                  <p className="text-sm text-indigo-600 break-words">{seller.email || "N/A"}</p>
+                </div>
+              </div>
+              {seller.memberSince && (
+                <p className="flex items-center gap-2 text-sm text-indigo-600">
+                  <CalendarDays size={16} className="text-indigo-500"/> Member since {new Date(seller.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                </p>
+              )}
+              {product.phone && (
+                <p className="flex items-center gap-2 text-sm text-indigo-600">
+                  <Phone size={16} className="text-indigo-500"/> {product.phone}
+                </p>
+              )}
+            </div>
+
+            <p className="text-slate-700 text-sm text-center">
+              Contact the seller directly for further buying process.
+            </p>
+
+            <button 
+              onClick={() => setShowContactModal(false)}
+              className="mt-2 bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
