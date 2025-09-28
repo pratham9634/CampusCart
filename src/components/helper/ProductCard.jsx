@@ -42,7 +42,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link href={`/product/${product._id || product.id}`}>
-      <Card className="flex flex-col w-full h-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group">
+      <Card className="flex flex-col py-2.5 w-full h-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group">
         {/* Product Image */}
         <div className="relative w-full aspect-video overflow-hidden">
           <Image
@@ -52,15 +52,15 @@ const ProductCard = ({ product }) => {
             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
           {product?.type === "auction" && (
-            <div className="absolute z-10 top-3 right-3 px-3 py-1 rounded-full bg-red-500/90 backdrop-blur-sm text-white text-xs font-semibold animate-pulse">
+            <div className="absolute z-10 top-3 right-3 px-3 py-1 rounded-full bg-red-500/90 backdrop-blur-sm text-white text-xs font-semibold animate-bounce">
               🔥 Auction
             </div>
           )}
         </div>
 
         {/* Product Info Wrapper */}
-        <div className="flex flex-col flex-1 p-4">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <div className="flex flex-col px-3 ">
+          <div className="flex items-center gap-2 mb-0.5">
             {product.category && (
               <span className="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
                 {product.category}
@@ -73,15 +73,15 @@ const ProductCard = ({ product }) => {
             )}
           </div>
 
-          <h3 className="font-bold text-lg text-slate-800 line-clamp-2 leading-tight">
+          <h3 className="font-bold mt-1 text-lg text-slate-800 line-clamp-2 leading-tight">
             {product.title}
           </h3>
 
-          <p className="text-slate-500 text-sm line-clamp-1 mt-1">
+          <p className="text-slate-500 text-sm line-clamp-1">
             {product.description || "No description available."}
           </p>
 
-          <div className="mt-3 flex items-baseline gap-2">
+          <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-orange-600">
               {product.type === "auction" && product.highestBid?.amount > 0
                 ? `₹${product.highestBid.amount.toLocaleString()}`
@@ -96,11 +96,11 @@ const ProductCard = ({ product }) => {
 
           <div className="flex-1" />
 
-         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-1">
   {/* Auction Countdown Timer */}
   {product.type === "auction" && timeLeft && (
     <div
-      className={`flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-full text-sm font-semibold ${
+      className={`flex items-center justify-center gap-1 py-0.5 px-1.5 rounded-full text-sm font-semibold ${
         isAuctionEnded
           ? "bg-red-100 text-red-700"
           : "bg-amber-100 text-amber-800"
@@ -111,12 +111,9 @@ const ProductCard = ({ product }) => {
     </div>
   )}
 
-  {/* This placeholder ensures the 'Posted ago' text is pushed to the right on larger screens 
-    even when the timer is not present.
-  */}
   {product.type !== "auction" && <div className="hidden sm:block" />}
   
-  <p className="text-slate-400 text-xs text-left sm:text-right">
+  <p className="text-slate-600 py-1  text-xs text-right">
     Posted{" "}
     {product.createdAt
       ? `${Math.floor(
