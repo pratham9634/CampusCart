@@ -1,9 +1,8 @@
 {
   "name": "campuscart",
   "version": "0.1.0",
-  "private": true, 
+  "private": true,
   "type": "module",
-  
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -28,6 +27,7 @@
     "embla-carousel-react": "^8.6.0",
     "express": "^5.1.0",
     "formidable": "^3.5.4",
+    "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
     "mongodb": "^6.19.0",
     "mongoose": "^8.18.1",
