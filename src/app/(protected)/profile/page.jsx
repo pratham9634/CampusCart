@@ -18,20 +18,19 @@ import {
   X,
   Power,
   PowerOff,
-  Shield,
   Trash2,
   UserCog,
 } from "lucide-react";
 
 export default function MyProfilePage() {
   const { user, isLoaded } = useUser();
-  const [deletingProductIds, setDeletingProductIds] = useState([]);
   const [profile, setProfile] = useState(null);
   const [usersList, setUsersList] = useState([]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingAdminIds, setLoadingAdminIds] = useState([]);
   const [successAdminIds, setSuccessAdminIds] = useState([]);
+  const [deletingProductIds, setDeletingProductIds] = useState([]);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -52,7 +51,7 @@ export default function MyProfilePage() {
         setProfile(json.currentUser || null);
         setProductsByUser(json.products || []);
         if (json.isAdmin) {
-          setUsersList(json.users.data || []);
+          setUsersList(json.users?.data || []);
         }
       } catch (err) {
         console.error("Profile load error:", err);
@@ -111,7 +110,7 @@ export default function MyProfilePage() {
       });
       if (!res.ok) throw new Error("Failed to update profile");
       const updatedProfile = await res.json();
-      setProfile(updatedProfile.user);
+      setProfile(updatedProfile.user || profile); // fallback to current profile
       setEditing(false);
       toast.success("Profile updated successfully!");
     } catch (err) {
@@ -141,54 +140,28 @@ export default function MyProfilePage() {
     }
   };
 
-  // ✅ --- NEW: Delete Product Functionality ---
- const deleteProduct = async (productId) => {
-  if (!window.confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) {
-    return;
-  }
-
-  setDeletingProductIds((prev) => [...prev, productId]); // start loading
-
-  try {
-    const res = await fetch(`/api/product/${productId}`, { method: "DELETE" });
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Failed to delete product");
-    }
-
-    // Animate removal before actually updating state
-    const element = document.getElementById(`product-${productId}`);
-    if (element) {
-      element.classList.add("opacity-0", "scale-95"); // tailwind fade+shrink
-      setTimeout(() => {
-        setProductsByUser((prev) => prev.filter((p) => p._id !== productId));
-        toast.success("Product deleted successfully.");
-      }, 300); // match transition duration
-    } else {
-      // fallback
+  const deleteProduct = async (productId) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    setDeletingProductIds((prev) => [...prev, productId]);
+    try {
+      const res = await fetch(`/api/product/${productId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete product");
       setProductsByUser((prev) => prev.filter((p) => p._id !== productId));
       toast.success("Product deleted successfully.");
+    } catch (err) {
+      console.error("Error deleting product:", err);
+      toast.error(err.message || "Failed to delete product.");
+    } finally {
+      setDeletingProductIds((prev) => prev.filter((id) => id !== productId));
     }
-  } catch (err) {
-    console.error("Error deleting product:", err);
-    toast.error(err.message || "Failed to delete product.");
-  } finally {
-    setDeletingProductIds((prev) => prev.filter((id) => id !== productId));
-  }
-};
-
+  };
 
   const makeAdmin = async (targetId) => {
-    if (loadingAdminIds.includes(targetId)) return; // prevent duplicate clicks
+    if (loadingAdminIds.includes(targetId)) return;
     setLoadingAdminIds((prev) => [...prev, targetId]);
-
     try {
-      const res = await fetch(`/api/users/${targetId}/make-admin`, {
-        method: "POST",
-      });
+      const res = await fetch(`/api/users/${targetId}/make-admin`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to promote user");
-
-      // Update user list in real-time
       setUsersList((prev) =>
         prev.map((u) =>
           u.id === targetId
@@ -196,13 +169,10 @@ export default function MyProfilePage() {
             : u
         )
       );
-
-      // Trigger success animation
       setSuccessAdminIds((prev) => [...prev, targetId]);
       setTimeout(() => {
         setSuccessAdminIds((prev) => prev.filter((id) => id !== targetId));
-      }, 1000); // 1s animation
-
+      }, 1000);
       toast.success("User promoted to admin.");
     } catch (err) {
       console.error("Make admin error:", err);
@@ -233,7 +203,7 @@ export default function MyProfilePage() {
             <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
               <div className="flex items-center gap-4">
                 <Image
-                  src={profile.imageUrl}
+                  src={profile?.imageUrl || "/default_profile.png"}
                   alt="Profile"
                   width={80}
                   height={80}
@@ -270,21 +240,15 @@ export default function MyProfilePage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone size={20} className="text-indigo-500" />
-                  <span className="text-slate-700">
-                    {form.number || "Not set"}
-                  </span>
+                  <span className="text-slate-700">{form.number || "Not set"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <University size={20} className="text-indigo-500" />
-                  <span className="text-slate-700">
-                    {form.college || "Not set"}
-                  </span>
+                  <span className="text-slate-700">{form.college || "Not set"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Calendar size={20} className="text-indigo-500" />
-                  <span className="text-slate-700">
-                    Member since {form.memberSince}
-                  </span>
+                  <span className="text-slate-700">Member since {form.memberSince}</span>
                 </div>
               </div>
             ) : (
@@ -335,9 +299,7 @@ export default function MyProfilePage() {
 
         {/* My Products Section */}
         <section>
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">
-            My Products
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">My Products</h2>
           <div className="bg-white shadow-lg rounded-2xl border border-slate-200 overflow-hidden">
             {productsByUser.length > 0 ? (
               <ul className="divide-y divide-slate-200">
@@ -347,10 +309,7 @@ export default function MyProfilePage() {
                     id={`product-${p._id}`}
                     className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
                   >
-                    <Link
-                      href={`/product/${p._id}`}
-                      className="flex items-center gap-4 group"
-                    >
+                    <Link href={`/product/${p._id}`} className="flex items-center gap-4 group">
                       <Image
                         src={p.images?.[0] || "/default_items.webp"}
                         alt={p.title}
@@ -363,12 +322,8 @@ export default function MyProfilePage() {
                           {p.title}
                         </h3>
                         <p className="text-slate-500 text-sm">
-                          ₹{p.price.toLocaleString()} -{" "}
-                          <span
-                            className={
-                              p.isActive ? "text-green-600" : "text-red-600"
-                            }
-                          >
+                          ₹{p.price?.toLocaleString() || 0} -{" "}
+                          <span className={p.isActive ? "text-green-600" : "text-red-600"}>
                             {p.isActive ? "Active" : "Inactive"}
                           </span>
                         </p>
@@ -385,41 +340,40 @@ export default function MyProfilePage() {
                       >
                         {p.isActive ? (
                           <>
-                            <PowerOff size={14} />
-                            Deactivate
+                            <PowerOff size={14} /> Deactivate
                           </>
                         ) : (
                           <>
-                            <Power size={14} />
-                            Activate
+                            <Power size={14} /> Activate
                           </>
                         )}
                       </button>
-                      {/* ✅ --- NEW: Delete Button --- */}
                       <button
-  onClick={() => deleteProduct(p._id)}
-  disabled={deletingProductIds.includes(p._id)}
-  className={`
-    flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all
-    ${deletingProductIds.includes(p._id) ? "bg-red-200 text-red-900 cursor-not-allowed animate-pulse" : "bg-red-100 text-red-800 hover:bg-red-200"}
-  `}
->
-  {deletingProductIds.includes(p._id) ? (
-    <span className="flex items-center gap-1"><Trash2 size={14} className="animate-spin"/> Deleting...</span>
-  ) : (
-    <><Trash2 size={14}/> Delete</>
-  )}
-</button>
-
+                        onClick={() => deleteProduct(p._id)}
+                        disabled={deletingProductIds.includes(p._id)}
+                        className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
+                          deletingProductIds.includes(p._id)
+                            ? "bg-red-200 text-red-900 cursor-not-allowed animate-pulse"
+                            : "bg-red-100 text-red-800 hover:bg-red-200"
+                        }`}
+                      >
+                        {deletingProductIds.includes(p._id) ? (
+                          <span className="flex items-center gap-1">
+                            <Trash2 size={14} className="animate-spin" /> Deleting...
+                          </span>
+                        ) : (
+                          <>
+                            <Trash2 size={14} /> Delete
+                          </>
+                        )}
+                      </button>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
               <div className="text-center p-12">
-                <p className="text-slate-500">
-                  You haven't listed any products yet.
-                </p>
+                <p className="text-slate-500">You haven't listed any products yet.</p>
                 <Link href="/create">
                   <button className="mt-4 bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                     List an Item
@@ -433,9 +387,7 @@ export default function MyProfilePage() {
         {/* Admin Users Section */}
         {profile.privateMetadata?.role === "admin" && usersList.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">
-              All Users (Admin Panel)
-            </h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">All Users (Admin Panel)</h2>
             <div className="bg-white shadow-lg rounded-2xl border border-slate-200 overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-200 text-sm text-slate-600">
@@ -448,13 +400,10 @@ export default function MyProfilePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {usersList.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="hover:bg-slate-50 transition-colors"
-                    >
+                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                       <td className="p-4 flex items-center gap-3">
                         <Image
-                          src={u.imageUrl}
+                          src={u.imageUrl || "/default_profile.png"}
                           alt=""
                           width={40}
                           height={40}
@@ -465,7 +414,7 @@ export default function MyProfilePage() {
                         </span>
                       </td>
                       <td className="p-4 text-slate-600">
-                        {u.emailAddresses[0]?.emailAddress}
+                        {u.emailAddresses?.[0]?.emailAddress || "N/A"}
                       </td>
                       <td className="p-4">
                         {u.privateMetadata?.role === "admin" ? (
@@ -483,24 +432,19 @@ export default function MyProfilePage() {
                           <button
                             onClick={() => makeAdmin(u.id)}
                             disabled={loadingAdminIds.includes(u.id)}
-                            className={`
-    flex items-center gap-1.5 ml-auto font-semibold px-3 py-1.5 rounded-md text-sm transition-all
-    ${
-      loadingAdminIds.includes(u.id)
-        ? "bg-yellow-200 text-yellow-900 cursor-not-allowed animate-pulse"
-        : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-    }
-    ${
-      successAdminIds.includes(u.id)
-        ? "scale-105 bg-green-100 text-green-800"
-        : ""
-    }
-  `}
+                            className={`flex items-center gap-1.5 ml-auto font-semibold px-3 py-1.5 rounded-md text-sm transition-all ${
+                              loadingAdminIds.includes(u.id)
+                                ? "bg-yellow-200 text-yellow-900 cursor-not-allowed animate-pulse"
+                                : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                            } ${
+                              successAdminIds.includes(u.id)
+                                ? "scale-105 bg-green-100 text-green-800"
+                                : ""
+                            }`}
                           >
                             {loadingAdminIds.includes(u.id) ? (
                               <span className="flex items-center gap-1">
-                                <UserCog size={14} className="animate-spin" />{" "}
-                                Promoting...
+                                <UserCog size={14} className="animate-spin" /> Promoting...
                               </span>
                             ) : (
                               <>
