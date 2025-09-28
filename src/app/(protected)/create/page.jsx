@@ -450,9 +450,10 @@ const Page = () => {
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 300 }}
                 className={`w-full sm:w-1/2 py-3 rounded-lg font-semibold text-white transition-colors duration-300 shadow-lg ${
-                  isSubmitting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                 isSubmitting
+  ? "bg-gradient-to-r from-red-200 via-orange-200 to-amber-200 cursor-not-allowed"
+  : "bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 hover:from-red-500 hover:via-orange-500 hover:to-amber-500"
+
                 }`}
               >
                 {isSubmitting ? <Loader /> : "List My Item"}
