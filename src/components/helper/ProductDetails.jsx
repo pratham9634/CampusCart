@@ -53,100 +53,125 @@ const ProductDetails = ({ product, currentUser }) => {
   const [isAuctionEnded, setIsAuctionEnded] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 
+  // --- ADDED ---: Check if the current user is the owner of the product.
+  const isOwner = currentUser?.id === product.createdBy;
+
   // ... (all your existing useEffect hooks and logic remain unchanged) ...
   // --- Countdown Timer ---
-  useEffect(() => {
-    if (product.type !== "auction" || !product.auctionEndDate) return;
+useEffect(() => {
+  if (product.type !== "auction" || !product.auctionEndDate) return;
 
-    const calculateTimeLeft = () => {
-      const difference = new Date(product.auctionEndDate) - new Date();
-      if (difference > 0) {
-        setIsAuctionEnded(false);
-        return {
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        };
-      } else {
-        setIsAuctionEnded(true);
-        return null;
-      }
-    };
+  let timer;
 
-    const updateTime = () => {
-      const newTime = calculateTimeLeft();
-      if (newTime) {
-        setTimeLeft(`${newTime.days}d ${newTime.hours}h ${newTime.minutes}m ${newTime.seconds}s`);
-      } else {
-        setTimeLeft("Auction Ended");
-      }
-    };
+  const calculateTimeLeft = () => {
+    const end = new Date(product.auctionEndDate).getTime();
 
-    updateTime();
-    const timer = setInterval(updateTime, 1000);
-    return () => clearInterval(timer);
-  }, [product.auctionEndDate, product.type]);
+    // ✅ Check if date is valid
+    if (isNaN(end)) {
+      console.error("Invalid auctionEndDate:", product.auctionEndDate);
+      return null;
+    }
 
-  // Socket.IO
-  useEffect(() => {
-    if (!socket) socket = io("http://localhost:5000");
-    socket.emit("joinProductRoom", product._id);
+    const now = Date.now(); // UTC
+    const difference = end - now;
 
-    socket.on("newBid", (data) => {
-      if (data.productId === product._id) {
-        setHighestBid(data.highestBid);
-        setBids(data.bids.sort((a, b) => b.amount - a.amount));
-      }
-    });
+    if (difference > 0) {
+      setIsAuctionEnded(false);
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / (1000 * 60)) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    } else {
+      setIsAuctionEnded(true);
+      return null;
+    }
+  };
 
-    socket.on("bidError", (err) => alert(err.message || "Bid error"));
+  const updateTime = () => {
+    const newTime = calculateTimeLeft();
 
-    return () => {
-      socket.off("newBid");
-      socket.off("bidError");
-    };
-  }, [product._id]);
+    if (newTime) {
+      setTimeLeft(
+        `${newTime.days}d ${newTime.hours}h ${newTime.minutes}m ${newTime.seconds}s`
+      );
+    } else {
+      setTimeLeft("Auction Ended");
 
-  // Fetch bids
-  useEffect(() => {
-    const fetchBids = async () => {
-      try {
-        const res = await fetch(`/api/bids/${product._id}`);
-        if (!res.ok) throw new Error("Failed to fetch bids");
-        const data = await res.json();
-        setBids(data.sort((a, b) => b.amount - a.amount));
-        if (data.length > 0) {
-          const maxBid = data.reduce((prev, current) => (prev.amount > current.amount ? prev : current));
-          setHighestBid(maxBid);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    if (product?._id) fetchBids();
-  }, [product._id]);
+      // ✅ Stop the timer when auction ends
+      if (timer) clearInterval(timer);
+    }
+  };
 
-  // Media
-  useEffect(() => {
-    const mediaArray = (product.images || []).map((img) => ({ src: img, isImage: true }));
-    if (product.video) mediaArray.push({ src: product.video, isImage: false });
-    setMedia(mediaArray);
-  }, [product.images, product.video]);
+  updateTime();
+  timer = setInterval(updateTime, 1000);
 
-  // Seller
-  useEffect(() => {
-    if (!product.createdBy) return;
-    const fetchSeller = async () => {
-      try {
-        const data = await getUserById(product.createdBy);
-        setSeller(data);
-      } catch (err) {
-        console.error("Failed to fetch seller info:", err);
-      }
-    };
-    fetchSeller();
-  }, [product.createdBy]);
+  return () => clearInterval(timer);
+}, [product.auctionEndDate, product.type]);
+
+
+
+
+  // Socket.IO
+  useEffect(() => {
+    if (!socket) socket = io("http://localhost:5000");
+    socket.emit("joinProductRoom", product._id);
+
+    socket.on("newBid", (data) => {
+      if (data.productId === product._id) {
+        setHighestBid(data.highestBid);
+        setBids(data.bids.sort((a, b) => b.amount - a.amount));
+      }
+    });
+
+    socket.on("bidError", (err) => alert(err.message || "Bid error"));
+
+    return () => {
+      socket.off("newBid");
+      socket.off("bidError");
+    };
+  }, [product._id]);
+
+  // Fetch bids
+  useEffect(() => {
+    const fetchBids = async () => {
+      try {
+        const res = await fetch(`/api/bids/${product._id}`);
+        if (!res.ok) throw new Error("Failed to fetch bids");
+        const data = await res.json();
+        setBids(data.sort((a, b) => b.amount - a.amount));
+        if (data.length > 0) {
+          const maxBid = data.reduce((prev, current) => (prev.amount > current.amount ? prev : current));
+          setHighestBid(maxBid);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (product?._id) fetchBids();
+  }, [product._id]);
+
+  // Media
+  useEffect(() => {
+    const mediaArray = (product.images || []).map((img) => ({ src: img, isImage: true }));
+    if (product.video) mediaArray.push({ src: product.video, isImage: false });
+    setMedia(mediaArray);
+  }, [product.images, product.video]);
+
+  // Seller
+  useEffect(() => {
+    if (!product.createdBy) return;
+    const fetchSeller = async () => {
+      try {
+        const data = await getUserById(product.createdBy);
+        setSeller(data);
+      } catch (err) {
+        console.error("Failed to fetch seller info:", err);
+      }
+    };
+    fetchSeller();
+  }, [product.createdBy]);
 
 
   const handlePrev = () => setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
@@ -156,6 +181,12 @@ const ProductDetails = ({ product, currentUser }) => {
 
   const handleBid = () => {
     if (!currentUser) return alert("Please login to place a bid");
+
+    // --- ADDED ---: Check if the bidder is the owner.
+    if (isOwner) {
+      return alert("You cannot bid on your own product.");
+    }
+    
     const amount = parseInt(bidAmount);
     if (!amount || amount <= (highestBid?.amount || product.price || 0))
       return alert("Bid must be higher than the current highest bid or starting price.");
@@ -259,14 +290,35 @@ const ProductDetails = ({ product, currentUser }) => {
 
             {/* Auction Timer */}
             {product.type === 'auction' && (
-              <motion.div variants={fadeInItem} className={`p-4 rounded-xl border ${isAuctionEnded ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
-                <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-1">
-                  <Clock size={16} />
-                  <span>{isAuctionEnded ? 'Auction Status' : 'Time Left'}</span>
-                </div>
-                <p className={`text-2xl font-bold ${isAuctionEnded ? 'text-red-600' : 'text-amber-900'}`}>{timeLeft || "Loading..."}</p>
-              </motion.div>
-            )}
+  <motion.div 
+    variants={fadeInItem} 
+    className={`p-4 rounded-xl border ${isAuctionEnded ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}
+  >
+    <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-1">
+      <Clock size={16} />
+      <span>{isAuctionEnded ? 'Auction Status' : 'Time Left'}</span>
+    </div>
+    <p className={`text-md font-bold ${isAuctionEnded ? 'text-red-600' : 'text-amber-900'}`}>
+      {timeLeft ? (
+        <>
+          <span>{timeLeft}</span>{" "}
+         
+          {currentUser?.id === product.createdBy?
+            <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 font-semibold italic rounded">
+              Seller: Contact bidders via email for next steps.
+            </span>: <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 font-semibold italic rounded">
+              Seller will Contact tou through email for next steps. Please keep checking your email for updates.
+            </span>
+          }
+        </>
+       
+      ) : (
+        "Loading..."
+      )}
+    </p>
+  </motion.div>
+)}
+
 
             {/* Price */}
             <motion.div variants={fadeInItem} className="p-4 bg-white rounded-xl border border-slate-200">
@@ -284,16 +336,25 @@ const ProductDetails = ({ product, currentUser }) => {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input 
                     type="number"
-                    placeholder={isAuctionEnded ? "Auction has ended" : "Enter your bid amount"}
+                    // --- MODIFIED ---: Updated placeholder logic
+                    placeholder={
+                      isOwner 
+                        ? "You cannot bid on your own item" 
+                        : isAuctionEnded 
+                        ? "Auction has ended" 
+                        : "Enter your bid amount"
+                    }
                     className="flex-1 border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100"
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
-                    disabled={isAuctionEnded}
+                    // --- MODIFIED ---: Disable if auction ended OR if current user is the owner
+                    disabled={isAuctionEnded || isOwner}
                   />
                   <button 
                     onClick={handleBid}
                     className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    disabled={isAuctionEnded}
+                    // --- MODIFIED ---: Disable if auction ended OR if current user is the owner
+                    disabled={isAuctionEnded || isOwner}
                   >
                     Place Bid
                   </button>
@@ -340,7 +401,7 @@ const ProductDetails = ({ product, currentUser }) => {
           </motion.div>
         </div>
       </div>
-      
+     
       {/* --- AnimatePresence for modals --- */}
       <AnimatePresence>
         {/* Bids Modal */}
