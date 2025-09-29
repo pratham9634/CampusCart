@@ -11,24 +11,26 @@ import { motion } from "framer-motion";
 
 // Helper function
 const formatTimeLeft = (difference) => {
-  // ✨ FIX 1: Add a check for NaN to prevent "NaNh NaNm left".
   if (isNaN(difference) || difference <= 0) return "Auction Ended";
-  
+
   const days = Math.floor(difference / (1000 * 60 * 60 * 24));
   const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((difference / 1000 / 60) % 60);
+  const seconds = Math.floor((difference / 1000) % 60);
+
   if (days > 0) return `${days}d ${hours}h left`;
   if (hours > 0) return `${hours}h ${minutes}m left`;
-  return `${minutes}m ${Math.floor((difference / 1000) % 60)}s left`;
+  if (minutes > 0) return `${minutes}m ${seconds}s left`;
+  return `${seconds}s left`;
 };
 
 // Card animation variants
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: "easeOut" }
+    transition: { duration: 0.4, ease: "easeOut" },
   },
 };
 
@@ -38,27 +40,22 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
 
   useEffect(() => {
     if (product.type !== "auction" || !product.auctionEndDate) {
-      if(product.type === "auction") {
-        setIsAuctionEnded(true);
-        setTimeLeft("Auction Ended");
-      }
+      setIsAuctionEnded(product.type === "auction");
+      setTimeLeft("Auction Ended");
       return;
-    };
+    }
 
-    const auctionEndUTC = new Date(product.auctionEndDate + 'Z');
+    const auctionEndUTC = new Date(product.auctionEndDate);
 
-    // ✨ FIX 2: Validate the date before starting the timer.
     if (isNaN(auctionEndUTC.getTime())) {
       setIsAuctionEnded(true);
       setTimeLeft("Auction Ended");
-      return; // Exit if the date is invalid
+      return;
     }
 
     const interval = setInterval(() => {
       const difference = auctionEndUTC.getTime() - Date.now();
-      
       setTimeLeft(formatTimeLeft(difference));
-      
       if (difference <= 0) {
         setIsAuctionEnded(true);
         clearInterval(interval);
@@ -72,6 +69,8 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
     <motion.div
       ref={ref}
       variants={variants || cardVariants}
+      initial="hidden"
+      animate="visible"
       whileTap={{ scale: 0.98 }}
       className="h-full"
     >
@@ -86,13 +85,9 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
               className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
             {product?.type === "auction" && (
-              <motion.div 
+              <motion.div
                 animate={{ y: [0, -4, 0] }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute z-10 top-3 right-3 px-3 py-1 rounded-full bg-red-500/90 backdrop-blur-sm text-white text-xs font-semibold"
               >
                 🔥 Auction
@@ -101,7 +96,7 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
           </div>
 
           {/* Product Info Wrapper */}
-          <div className="flex flex-col px-3 ">
+          <div className="flex flex-col px-3 flex-1">
             <div className="flex items-center gap-2 mb-0.5">
               {product.category && (
                 <span className="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
@@ -114,12 +109,14 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
                 </span>
               )}
             </div>
+
             <h3 className="font-bold mt-1 text-lg text-slate-800 line-clamp-2 leading-tight">
               {product.title}
             </h3>
             <p className="text-slate-500 text-sm line-clamp-1">
               {product.description || "No description available."}
             </p>
+
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-2xl font-extrabold text-orange-600">
                 {product.type === "auction" && product.highestBid?.amount > 0
@@ -132,7 +129,9 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
                 </span>
               )}
             </div>
+
             <div className="flex-1" />
+
             <div className="flex flex-col text-sm sm:flex-row sm:items-center sm:justify-between gap-1 mt-1">
               {product.type === "auction" && timeLeft && (
                 <div
@@ -143,7 +142,7 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
                   }`}
                 >
                   <Clock size={16} />
-                  <span >{timeLeft}</span>
+                  <span>{timeLeft}</span>
                 </div>
               )}
               {product.type !== "auction" && <div className="hidden sm:block" />}
@@ -156,6 +155,7 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
                   : "N/A"}
               </p>
             </div>
+
             <Button className="w-full mt-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg py-2.5 transition-colors">
               View Product
             </Button>
