@@ -1,4 +1,3 @@
-// src/components/ProductCard.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,12 +6,14 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
-import React from "react"; // ✨ Import React for forwardRef
-import { motion } from "framer-motion"; // ✨ 1. Import motion
+import React from "react";
+import { motion } from "framer-motion";
 
-// Helper function (no changes)
+// Helper function
 const formatTimeLeft = (difference) => {
-  if (difference <= 0) return "Auction Ended";
+  // ✨ FIX 1: Add a check for NaN to prevent "NaNh NaNm left".
+  if (isNaN(difference) || difference <= 0) return "Auction Ended";
+  
   const days = Math.floor(difference / (1000 * 60 * 60 * 24));
   const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((difference / 1000 / 60) % 60);
@@ -21,7 +22,7 @@ const formatTimeLeft = (difference) => {
   return `${minutes}m ${Math.floor((difference / 1000) % 60)}s left`;
 };
 
-// ✨ 2. Define variants for the entry animation
+// Card animation variants
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
@@ -31,30 +32,47 @@ const cardVariants = {
   },
 };
 
-// ✨ 3. Wrap component in React.forwardRef to allow parent animations
 const ProductCard = React.forwardRef(({ product, variants }, ref) => {
   const [timeLeft, setTimeLeft] = useState("");
   const [isAuctionEnded, setIsAuctionEnded] = useState(false);
 
   useEffect(() => {
-    if (product.type !== "auction" || !product.auctionEndDate) return;
+    if (product.type !== "auction" || !product.auctionEndDate) {
+      if(product.type === "auction") {
+        setIsAuctionEnded(true);
+        setTimeLeft("Auction Ended");
+      }
+      return;
+    };
+
+    const auctionEndUTC = new Date(product.auctionEndDate + 'Z');
+
+    // ✨ FIX 2: Validate the date before starting the timer.
+    if (isNaN(auctionEndUTC.getTime())) {
+      setIsAuctionEnded(true);
+      setTimeLeft("Auction Ended");
+      return; // Exit if the date is invalid
+    }
+
     const interval = setInterval(() => {
-      const difference = +new Date(product.auctionEndDate) - +new Date();
+      const difference = auctionEndUTC.getTime() - Date.now();
+      
       setTimeLeft(formatTimeLeft(difference));
+      
       if (difference <= 0) {
         setIsAuctionEnded(true);
         clearInterval(interval);
       }
     }, 1000);
+
     return () => clearInterval(interval);
   }, [product.auctionEndDate, product.type]);
 
   return (
-    // ✨ 4. Wrap the Card in a motion.div to apply animations
     <motion.div
       ref={ref}
-      variants={variants || cardVariants} // Use variants from parent, or default
-      whileTap={{ scale: 0.98 }} // Add subtle tap effect without changing hover UI
+      variants={variants || cardVariants}
+      whileTap={{ scale: 0.98 }}
       className="h-full"
     >
       <Link href={`/product/${product._id || product.id}`} className="block h-full">
@@ -68,7 +86,6 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
               className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
             {product?.type === "auction" && (
-              // ✨ 5. Replace 'animate-bounce' with a smoother motion animation
               <motion.div 
                 animate={{ y: [0, -4, 0] }}
                 transition={{
@@ -83,7 +100,7 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
             )}
           </div>
 
-          {/* Product Info Wrapper (no changes) */}
+          {/* Product Info Wrapper */}
           <div className="flex flex-col px-3 ">
             <div className="flex items-center gap-2 mb-0.5">
               {product.category && (
@@ -116,17 +133,17 @@ const ProductCard = React.forwardRef(({ product, variants }, ref) => {
               )}
             </div>
             <div className="flex-1" />
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-1">
+            <div className="flex flex-col text-sm sm:flex-row sm:items-center sm:justify-between gap-1 mt-1">
               {product.type === "auction" && timeLeft && (
                 <div
-                  className={`flex items-center justify-center gap-1 py-0.5 px-1.5 rounded-full text-sm font-semibold ${
+                  className={`flex flex-nowrap items-center justify-center gap-1 py-0.5 px-1.5 rounded-full text-xs font-semibold ${
                     isAuctionEnded
                       ? "bg-red-100 text-red-700"
                       : "bg-amber-100 text-amber-800"
                   }`}
                 >
                   <Clock size={16} />
-                  <span>{timeLeft}</span>
+                  <span >{timeLeft}</span>
                 </div>
               )}
               {product.type !== "auction" && <div className="hidden sm:block" />}

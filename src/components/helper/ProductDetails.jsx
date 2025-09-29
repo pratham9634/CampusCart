@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link"; // <-- Import Link for navigation
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
-// --- Framer Motion Import ---
 import { motion, AnimatePresence } from "framer-motion";
 import { getUserById } from "@/lib/clerk";
 import Loader from "./Loader";
@@ -12,7 +12,7 @@ import { ChevronLeft, ChevronRight, Tag, ShieldCheck, Hammer, Phone, University,
 
 let socket;
 
-// --- Animation Variants Definition ---
+// Animation Variants
 const backdropVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
@@ -53,65 +53,39 @@ const ProductDetails = ({ product, currentUser }) => {
   const [isAuctionEnded, setIsAuctionEnded] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 
-  // --- ADDED ---: Check if the current user is the owner of the product.
-  const isOwner = currentUser?.id === product.createdBy;
+  // Countdown Timer
+  useEffect(() => {
+    if (product.type !== "auction" || !product.auctionEndDate) return;
 
-  // ... (all your existing useEffect hooks and logic remain unchanged) ...
-  // --- Countdown Timer ---
-useEffect(() => {
-  if (product.type !== "auction" || !product.auctionEndDate) return;
+    const calculateTimeLeft = () => {
+      const difference = new Date(product.auctionEndDate) - new Date();
+      if (difference > 0) {
+        setIsAuctionEnded(false);
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        };
+      } else {
+        setIsAuctionEnded(true);
+        return null;
+      }
+    };
 
-  let timer;
+    const updateTime = () => {
+      const newTime = calculateTimeLeft();
+      if (newTime) {
+        setTimeLeft(`${newTime.days}d ${newTime.hours}h ${newTime.minutes}m ${newTime.seconds}s`);
+      } else {
+        setTimeLeft("Auction Ended");
+      }
+    };
 
-  const calculateTimeLeft = () => {
-    const end = new Date(product.auctionEndDate).getTime();
-
-    // ✅ Check if date is valid
-    if (isNaN(end)) {
-      console.error("Invalid auctionEndDate:", product.auctionEndDate);
-      return null;
-    }
-
-    const now = Date.now(); // UTC
-    const difference = end - now;
-
-    if (difference > 0) {
-      setIsAuctionEnded(false);
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / (1000 * 60)) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      };
-    } else {
-      setIsAuctionEnded(true);
-      return null;
-    }
-  };
-
-  const updateTime = () => {
-    const newTime = calculateTimeLeft();
-
-    if (newTime) {
-      setTimeLeft(
-        `${newTime.days}d ${newTime.hours}h ${newTime.minutes}m ${newTime.seconds}s`
-      );
-    } else {
-      setTimeLeft("Auction Ended");
-
-      // ✅ Stop the timer when auction ends
-      if (timer) clearInterval(timer);
-    }
-  };
-
-  updateTime();
-  timer = setInterval(updateTime, 1000);
-
-  return () => clearInterval(timer);
-}, [product.auctionEndDate, product.type]);
-
-
-
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, [product.auctionEndDate, product.type]);
 
   // Socket.IO
   useEffect(() => {
@@ -181,12 +155,6 @@ useEffect(() => {
 
   const handleBid = () => {
     if (!currentUser) return alert("Please login to place a bid");
-
-    // --- ADDED ---: Check if the bidder is the owner.
-    if (isOwner) {
-      return alert("You cannot bid on your own product.");
-    }
-    
     const amount = parseInt(bidAmount);
     if (!amount || amount <= (highestBid?.amount || product.price || 0))
       return alert("Bid must be higher than the current highest bid or starting price.");
@@ -200,7 +168,6 @@ useEffect(() => {
   };
 
   return (
-    // --- Added motion.section for page load animation ---
     <motion.section 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -212,7 +179,6 @@ useEffect(() => {
           {/* Left Column: Media */}
           <motion.div variants={fadeInItem} className="flex flex-col items-center gap-4">
             <div className="w-full aspect-video relative rounded-2xl overflow-hidden shadow-lg group bg-slate-100">
-              {/* --- AnimatePresence for smooth image/video transition --- */}
               <AnimatePresence mode="wait">
                 {media.length > 0 ? (
                   <motion.div
@@ -249,9 +215,8 @@ useEffect(() => {
             {media.length > 1 && (
               <div className="flex gap-3 justify-center flex-wrap">
                 {media.map((item, idx) => (
-                  // --- Added motion.div for hover/tap effects on thumbnails ---
                   <motion.div
-                    key={idx}
+                    key={item.src} // Using a unique key
                     onClick={() => setCurrentIndex(idx)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -271,7 +236,6 @@ useEffect(() => {
           </motion.div>
 
           {/* Right Column */}
-          {/* --- Stagger animation for right column items --- */}
           <motion.div 
             variants={staggerContainer}
             initial="hidden"
@@ -290,35 +254,14 @@ useEffect(() => {
 
             {/* Auction Timer */}
             {product.type === 'auction' && (
-  <motion.div 
-    variants={fadeInItem} 
-    className={`p-4 rounded-xl border ${isAuctionEnded ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}
-  >
-    <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-1">
-      <Clock size={16} />
-      <span>{isAuctionEnded ? 'Auction Status' : 'Time Left'}</span>
-    </div>
-    <p className={`text-md font-bold ${isAuctionEnded ? 'text-red-600' : 'text-amber-900'}`}>
-      {timeLeft ? (
-        <>
-          <span>{timeLeft}</span>{" "}
-         
-          {currentUser?.id === product.createdBy?
-            <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 font-semibold italic rounded">
-              Seller: Contact bidders via email for next steps.
-            </span>: <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 font-semibold italic rounded">
-              Seller will Contact tou through email for next steps. Please keep checking your email for updates.
-            </span>
-          }
-        </>
-       
-      ) : (
-        "Loading..."
-      )}
-    </p>
-  </motion.div>
-)}
-
+              <motion.div variants={fadeInItem} className={`p-4 rounded-xl border ${isAuctionEnded ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-1">
+                  <Clock size={16} />
+                  <span>{isAuctionEnded ? 'Auction Status' : 'Time Left'}</span>
+                </div>
+                <p className={`text-2xl font-bold ${isAuctionEnded ? 'text-red-600' : 'text-amber-900'}`}>{timeLeft || "Loading..."}</p>
+              </motion.div>
+            )}
 
             {/* Price */}
             <motion.div variants={fadeInItem} className="p-4 bg-white rounded-xl border border-slate-200">
@@ -336,25 +279,16 @@ useEffect(() => {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input 
                     type="number"
-                    // --- MODIFIED ---: Updated placeholder logic
-                    placeholder={
-                      isOwner 
-                        ? "You cannot bid on your own item" 
-                        : isAuctionEnded 
-                        ? "Auction has ended" 
-                        : "Enter your bid amount"
-                    }
+                    placeholder={isAuctionEnded ? "Auction has ended" : "Enter your bid amount"}
                     className="flex-1 border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100"
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
-                    // --- MODIFIED ---: Disable if auction ended OR if current user is the owner
-                    disabled={isAuctionEnded || isOwner}
+                    disabled={isAuctionEnded}
                   />
                   <button 
                     onClick={handleBid}
                     className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    // --- MODIFIED ---: Disable if auction ended OR if current user is the owner
-                    disabled={isAuctionEnded || isOwner}
+                    disabled={isAuctionEnded}
                   >
                     Place Bid
                   </button>
@@ -401,10 +335,9 @@ useEffect(() => {
           </motion.div>
         </div>
       </div>
-     
-      {/* --- AnimatePresence for modals --- */}
+      
+      {/* --- BIDS MODAL (CORRECTED) --- */}
       <AnimatePresence>
-        {/* Bids Modal */}
         {showBidsModal && (
           <motion.div
             variants={backdropVariants}
@@ -422,12 +355,29 @@ useEffect(() => {
                 {bids.length === 0 ? (
                   <li className="text-center text-slate-500 py-8">No bids have been placed yet.</li>
                 ) : (
-                  bids.map((bid, idx) => (
-                    <li key={idx} className={`flex justify-between items-center py-3 px-4 rounded-lg border-b border-slate-200 ${idx === 0 ? 'bg-indigo-50' : ''}`}>
-                      <span className={`font-semibold break-words ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>{bid.bidderName}</span>
-                      <span className={`font-bold break-words text-right ${idx === 0 ? 'text-indigo-800 text-lg' : 'text-slate-600'}`}>₹{bid.amount.toLocaleString()}</span>
-                    </li>
-                  ))
+                  bids.map((bid, idx) => {
+                    // Check if the current user is the owner of the product
+                    const isOwner = currentUser?.id === product.createdBy;
+
+                    return (
+                      <li key={bid._id || idx} className={`flex justify-between items-center py-3 px-4 rounded-lg border-b border-slate-200 ${idx === 0 ? 'bg-indigo-50' : ''}`}>
+                        {isOwner ? (
+                          // If owner, render a <Link> to the bidder's profile
+                          <Link href={`/profile/${bid.bidderId}`} className={`font-semibold break-words hover:underline ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>
+                            {bid.bidderName}
+                          </Link>
+                        ) : (
+                          // Otherwise, just display the name in a <span>
+                          <span className={`font-semibold break-words ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>
+                            {bid.bidderName}
+                          </span>
+                        )}
+                        <span className={`font-bold break-words text-right ${idx === 0 ? 'text-indigo-800 text-lg' : 'text-slate-600'}`}>
+                          ₹{bid.amount.toLocaleString()}
+                        </span>
+                      </li>
+                    );
+                  })
                 )}
               </ul>
             </motion.div>
@@ -435,8 +385,8 @@ useEffect(() => {
         )}
       </AnimatePresence>
 
+      {/* --- CONTACT SELLER MODAL --- */}
       <AnimatePresence>
-        {/* Contact Seller Modal */}
         {showContactModal && seller && (
           <motion.div
             variants={backdropVariants}
