@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 // Utility: format "time ago" (code is unchanged)
 const timeAgo = (date) => {
@@ -25,55 +26,6 @@ const timeAgo = (date) => {
   return "Just now";
 };
 
-// Dummy products data (code is unchanged)
-const dummyProducts = [
-  {
-    _id: "1",
-    title: "Dell Inspiron Laptop",
-    description: "Powerful laptop with Intel i5, 8GB RAM, and 512GB SSD.",
-    price: 35000,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1622286346003-c5c7e63b1088?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGRlbGwlMjBsYXB0b3B8ZW58MHx8MHx8fDA%3D",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    _id: "2",
-    title: "Guitar Acoustic",
-    description: "6-string acoustic guitar in excellent condition.",
-    price: 5000,
-    category: "Musical Instruments",
-    image: "https://images.unsplash.com/photo-1516924962500-2b4b3b99ea02?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Z3VpdGFyfGVufDB8fDB8fHww",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
- 
-  {
-    _id: "3",
-    title: "Casio Scientific Calculator",
-    description: "Perfect for engineering and math students.",
-    price: 700,
-    category: "Stationery",
-    image: "https://images.unsplash.com/photo-1668930185267-1f3c19851b5b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHNjaWVudGlmaWMlMjBjYWxjdWxhdG9yfGVufDB8fDB8fHww",
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-  },
-  {
-    _id: "4",
-    title: "Cricket Bat SS",
-    description: "Premium English willow bat, barely used.",
-    price: 2500,
-    category: "Sports",
-    image: "https://images.unsplash.com/photo-1646282814550-f521d9b57a59?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y3JpY2tldCUyMGJhdHxlbnwwfHwwfHx8MA%3D%3D",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-  },
-  {
-    _id: "5",
-    title: "Hostel Chair",
-    description: "Strong wooden chair for hostel or study use.",
-    price: 900,
-    category: "Furniture",
-    image: "https://plus.unsplash.com/premium_photo-1675186049302-a0dad4cf3412?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8Y2hhaXIlMjB3b29kfGVufDB8fDB8fHww",
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-  },
-];
 
 // Animation variants (code is unchanged)
 const containerVariants = {
@@ -98,8 +50,28 @@ const itemVariants = {
   },
 };
 
-const Featured = ({ products = dummyProducts }) => {
-  const featured = products?.slice(0, 5) || [];
+const Featured = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch latest 5 products from backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("/api/featured"); // Backend route
+        const data = await res.json();
+        setProducts(data.slice(0, 5)); // latest 5 products
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) return <p className="text-center mt-20">Loading Featured Products...</p>;
 
   return (
     <section className="w-full py-12 px-8 bg-gray-200">
@@ -125,7 +97,7 @@ const Featured = ({ products = dummyProducts }) => {
         whileInView="visible" // Changed 'animate' to 'whileInView'
         viewport={{ once: false, amount: 0.2 }} // Added viewport settings
       >
-        {featured.map((product) => (
+        {products.map((product) => (
           <motion.div
             key={product._id}
             variants={itemVariants}
