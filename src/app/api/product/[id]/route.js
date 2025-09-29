@@ -72,37 +72,55 @@ const extractPublicId = (url) => {
 };
 
 export async function DELETE(req) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     await connectDB();
 
     // Authentication
     const { userId } = getAuth(req);
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId) {
+      await session.abortTransaction();
+      session.endSession();
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const url = new URL(req.url);
     const segments = url.pathname.split("/");
     const productId = segments[segments.length - 1];
 
     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      await session.abortTransaction();
+      session.endSession();
       return NextResponse.json({ error: "Invalid Product ID" }, { status: 400 });
     }
 
-    const product = await Product.findById(productId);
-    if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    const product = await Product.findById(productId).session(session);
+    if (!product) {
+      await session.abortTransaction();
+      session.endSession();
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
 
     // Authorization
     const user = await (await clerkClient()).users.getUser(userId);
-    const isAdmin = user.publicMetadata?.role === "admin";
+    const isAdmin = user.privateMetadata?.role === "admin";
     if (product.createdBy.toString() !== userId && !isAdmin) {
+      await session.abortTransaction();
+      session.endSession();
       return NextResponse.json({ error: "Forbidden: No permission" }, { status: 403 });
     }
+
+    // Delete related bids
+    await Bid.deleteMany({ product: productId }).session(session);
 
     // Delete images
     if (product.images && product.images.length > 0) {
       const publicIds = product.images.map(imgUrl => extractPublicId(imgUrl)).filter(Boolean);
       if (publicIds.length > 0) {
-       const result = await cloudinary.api.delete_resources(publicIds);
-      console.log("Image deletion result:", result);
+        const result = await cloudinary.api.delete_resources(publicIds);
+        console.log("Image deletion result:", result);
       }
     }
 
@@ -114,12 +132,23 @@ export async function DELETE(req) {
       }
     }
 
-    // Delete product from DB
-    await Product.findByIdAndDelete(productId);
+    // Delete product
+    await Product.findByIdAndDelete(productId).session(session);
 
-    return NextResponse.json({ message: "Product deleted successfully" }, { status: 200 });
+    // ✅ Commit if everything succeeded
+    await session.commitTransaction();
+    session.endSession();
+
+    return NextResponse.json({ message: "Product and related bids deleted successfully" }, { status: 200 });
+
   } catch (err) {
     console.error("🔥 API DELETE Error:", err);
+
+    // ❌ Rollback if anything fails
+    await session.abortTransaction();
+    session.endSession();
+
     return NextResponse.json({ error: "Failed to delete product", details: err.message }, { status: 500 });
   }
 }
+
