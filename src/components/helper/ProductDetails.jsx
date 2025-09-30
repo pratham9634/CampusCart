@@ -84,7 +84,7 @@ const ProductDetails = ({ product, currentUser }) => {
   useEffect(() => {
     if (!product?._id) return;
 
-    socketRef.current = io(process.env.SOCKET_URL, {
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
   transports: ["websocket"],
 });
     socketRef.current.emit("joinProductRoom", product._id);
