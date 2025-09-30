@@ -1,20 +1,31 @@
 Campus Cart 🛒
+
 A modern OLX-like marketplace for college students to buy, sell, and bid on items in real-time. Campus Cart creates a trusted, exclusive community for students to trade goods within their own campus.
 
 🚀 Live Demo
 🌐 https://campus-cart.vercel.app/
 
 ✨ Overview
+
 Campus Cart is a full-stack web application designed to simplify the process of buying and selling second-hand goods within a college campus. It moves beyond simple listings by incorporating a dynamic, real-time bidding system, creating an engaging and competitive marketplace. Listings are temporary and automatically expire, ensuring the marketplace stays fresh and relevant.
 
 🌟 Key Features
+
 Feature	Icon	Description
+
 Authentication	🔑	Secure and seamless login/signup experience powered by Clerk for robust user management.
+
 Buy & Sell	🛍️	Easily list products with multiple images, detailed descriptions, and a starting price.
+
 Real-time Bidding	💸	Place bids on items and see updates instantly across all clients, powered by Socket.io.
+
 College-specific	🏫	A closed-loop marketplace ensuring you only trade with verified students from your campus community.
+
 Auto Expiry	⏳	Temporary listings automatically get deleted after their expiration time, keeping the platform clean.
+
 Responsive UI	📱	A modern and clean user interface that works perfectly on both mobile devices and desktops.
+
+
 
 🛠️ Tech Stack
 
