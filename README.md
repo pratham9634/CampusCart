@@ -30,17 +30,24 @@ Responsive UI	📱	A modern and clean user interface that works perfectly on bot
 🛠️ Tech Stack
 
 Frontend: Next.js, React, Tailwind CSS, Framer Motion
+
 Backend: Next.js API Routes, Socket.io
+
 Database: MongoDB Atlas
+
 Authentication: Clerk
+
 Image Storage: Cloudinary
+
 Deployment: Vercel (Frontend + API), Render (Socket Server)
+
 
 🏗️ Architecture Diagram
 <img width="1024" height="1024" alt="Campus_Cart_Architecture_Design" src="https://github.com/user-attachments/assets/b4a8dfd5-f29c-476e-94a9-952a07ed9c32" />
 
 
 📷 Screenshots / GIFs
+
 Here's a glimpse of Campus Cart in action
 HomePage :![home](https://github.com/user-attachments/assets/d229de4a-67de-4ebd-af5c-6b75e673ba47)
 CreateItemPage : ![create](https://github.com/user-attachments/assets/cf366fdb-b7b2-43ef-bc1d-ffaa7c62e948)
@@ -49,37 +56,47 @@ ProductDetailPage : ![detail](https://github.com/user-attachments/assets/acf2da0
 
 
 🛠️ Developer Setup
+
 Follow these instructions to get a local copy of the project up and running for development and testing purposes.
 
 Prerequisites
-Node.js (v18 or later)
+->Node.js (v18 or later)
 
-npm or yarn
+->npm or yarn
 
-MongoDB Atlas account
+->MongoDB Atlas account
 
-Clerk account
+->Clerk account
 
-Cloudinary account
+->Cloudinary account
+
 
 Installation & Setup
+
 Clone the repository:
 
 Bash
 
 git clone https://github.com/your-username/campuscart.git
+
 cd campuscart
+
 Install dependencies:
+
 
 Bash
 npm install
 # or
 yarn install
+
 Set up Environment Variables:
+
 Create a file named .env.local in the root of the project and add the following keys. Obtain these from your respective service dashboards.
 
 # MongoDB
+
 MONGODB_URI=your_mongodb_connection_string
+
 
 # Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
