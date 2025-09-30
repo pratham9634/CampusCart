@@ -4,7 +4,7 @@ import http from "http";
 import { Server } from "socket.io";
 import connectDB from "./src/lib/db.js";
 import Product from "./src/model/Product.js";
-import Bid from "./src/model/Bid.js"; // Import the Bid model for a scalable bidding history
+import Bid from "./src/model/Bid.js";
 
 const app = express();
 const server = http.createServer(app);

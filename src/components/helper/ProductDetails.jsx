@@ -84,7 +84,9 @@ const ProductDetails = ({ product, currentUser }) => {
   useEffect(() => {
     if (!product?._id) return;
 
-    socketRef.current = io("http://localhost:5000");
+    socketRef.current = io(process.env.SOCKET_URL, {
+  transports: ["websocket"],
+});
     socketRef.current.emit("joinProductRoom", product._id);
 
     const handleNewBid = (data) => {
