@@ -12,7 +12,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS configuration
 const io = new Server(server, {
   cors: {
-    origin: "*", // IMPORTANT: In production, restrict this to your frontend's domain (e.g., "http://localhost:3000")
+    origin: process.env.NEXT_PUBLIC_SOCKET_URL, // IMPORTANT: In production, restrict this to your frontend's domain (e.g., "http://localhost:3000")
     methods: ["GET", "POST"],
   },
 });
